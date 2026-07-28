@@ -349,6 +349,7 @@ datalist{color:#000}
     <div class="phrow"><div class="exec-status"><h2 style="margin:0">Diagnóstico ejecutivo</h2><span class="chip" id="execChip"></span></div></div>
     <div class="ph" id="execPh" style="margin-top:2px"></div>
     <div class="exec-headline" id="execHeadline" style="margin-bottom:0"></div>
+    <div id="execRoster" title="Una baja se confirma tras 3 meses sin actividad; un alta, al primer mes con actividad." style="margin-top:12px;font-size:12.5px;color:var(--text-secondary);line-height:1.5"></div>
   </div>
 
   <div class="kpis" id="kpis"></div>
@@ -559,6 +560,36 @@ function diagFor(f,mi){
 }
 function dtxt(v,isPct){if(v===null)return'—';if(isPct)return(v>=0?'+':'')+v.toFixed(1)+' pp';return(v>=0?'+':'')+(v*100).toFixed(1)+'%';}
 function dcls(v,inv){if(v===null)return'';return (v>=0)!==!!inv?'up':'down';}
+/* padrón de tiendas: activa = con registro en la ventana [mi-2, mi] (3 meses).
+   alta = aparece en la ventana actual y no en la previa; baja = al revés (3 meses sin actividad). */
+function rosterActive(mi,f){
+  const s=new Set();
+  for(let m=Math.max(0,mi-2);m<=mi;m++){(recsByMonth[m]||[]).forEach(r=>{
+    const st=DB.stores[r[0]];if(f&&f!=='ALL'&&st.f!==f)return;if(!segPass(r[0]))return;s.add(r[0]);});}
+  return s;
+}
+function rosterMoves(mi,f){
+  if(mi<1)return null;
+  const cur=rosterActive(mi,f), prev=rosterActive(mi-1,f);
+  const entered=[],left=[];
+  cur.forEach(si=>{if(!prev.has(si))entered.push(si);});
+  prev.forEach(si=>{if(!cur.has(si))left.push(si);});
+  return {entered,left};
+}
+function fmtBreak(list){const o={WM:0,BA:0,SC:0};list.forEach(si=>o[DB.stores[si].f]++);
+  return ['WM','BA','SC'].filter(f=>o[f]>0).map(f=>o[f]+' '+f).join(' · ');}
+function rosterNames(list){return list.slice(0,4).map(si=>{const s=DB.stores[si];return (s.n||('clave '+s.clave))+' ('+s.f+')';}).join(', ')+(list.length>4?' …':'');}
+function renderRoster(){
+  const el=document.getElementById('execRoster');if(!el)return;
+  const mv=rosterMoves(state.mi,state.formato);
+  if(!mv){el.innerHTML='';return;}
+  const nE=mv.entered.length,nL=mv.left.length,isAll=state.formato==='ALL';
+  if(nE===0&&nL===0){el.innerHTML='<span style="color:var(--muted)">🏪 Padrón de tiendas: sin altas ni bajas respecto al mes anterior.</span>';return;}
+  const parts=[];
+  if(nE>0)parts.push(`<span class="up" style="font-weight:700">▲ ${nE} ${nE===1?'alta':'altas'}</span>`+(isAll?` <span style="color:var(--muted)">(${fmtBreak(mv.entered)})</span>`:'')+(nE<=4?` — ${rosterNames(mv.entered)}`:''));
+  if(nL>0)parts.push(`<span class="down" style="font-weight:700">▼ ${nL} ${nL===1?'baja':'bajas'}</span>`+(isAll?` <span style="color:var(--muted)">(${fmtBreak(mv.left)})</span>`:'')+(nL<=4?` — ${rosterNames(mv.left)}`:''));
+  el.innerHTML='🏪 <strong>Movimiento de padrón</strong> (al cierre de '+mlabel(state.mi)+'): '+parts.join(' &nbsp; · &nbsp; ');
+}
 function renderExec(){
   const mi=state.mi;const f=state.formato;
   const isAll=f==='ALL';const name=isAll?'Grupo Walmart':FNAME[f];
@@ -591,6 +622,7 @@ function renderExec(){
     }
   }
   document.getElementById('execHeadline').innerHTML=hl;
+  renderRoster();
 }
 /* ============ KPI render ============ */
 const fAlc=v=>(v*100).toFixed(0)+'%';
