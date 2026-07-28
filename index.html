@@ -494,8 +494,22 @@ function segOf(si){return SEG[String(si)]||{d:'',t:''};}
 function segPass(si){const g=segOf(si);return (state.distrito==='ALL'||g.d===state.distrito)&&(state.territorial==='ALL'||g.t===state.territorial);}
 function segFilt(rows,keyFn){return rows.filter(r=>segPass(keyFn?keyFn(r):r.si));}
 
-/* aggregate [monto,cant,meta,eleg,ntiendas] for a format+month, or ALL=sum */
-function aggAt(f,mi){ if(f==='ALL'){let a=[0,0,0,0,0];F.forEach(x=>{const d=DB.agg[x][mi];for(let i=0;i<5;i++)a[i]+=d[i];});return a;} return DB.agg[f][mi].slice(); }
+/* índice de recs por mes, para agregar respetando el filtro de segmento */
+const recsByMonth={};
+for(const _r of DB.recs){(recsByMonth[_r[1]]||(recsByMonth[_r[1]]=[])).push(_r);}
+function segActive(){return state.distrito!=='ALL'||state.territorial!=='ALL';}
+/* aggregate [monto,cant,meta,eleg,ntiendas] for a format+month, or ALL=sum.
+   Con filtro de Distrito/Territorial activo se recalcula desde las tiendas del segmento. */
+function aggAt(f,mi){
+  if(!segActive()){
+    if(f==='ALL'){let a=[0,0,0,0,0];F.forEach(x=>{const d=DB.agg[x][mi];for(let i=0;i<5;i++)a[i]+=d[i];});return a;}
+    return DB.agg[f][mi].slice();
+  }
+  let a=[0,0,0,0,0];const rs=recsByMonth[mi]||[];
+  for(const r of rs){const s=DB.stores[r[0]];if(f!=='ALL'&&s.f!==f)continue;if(!segPass(r[0]))continue;
+    a[0]+=r[2];a[1]+=r[3];a[2]+=r[4];a[3]+=r[5];if(r[3]>0)a[4]++;}
+  return a;
+}
 /* YTD sum from January of that month's year up to mi (inclusive) */
 function ytdRange(mi){const y=yearOf(mi);let s=mi;while(s>0&&yearOf(s-1)===y)s--;return[s,mi];}
 function aggYTD(f,mi){const[s,e]=ytdRange(mi);let a=[0,0,0,0,0];for(let i=s;i<=e;i++){const d=aggAt(f,i);for(let j=0;j<4;j++)a[j]+=d[j];a[4]=Math.max(a[4],d[4]);}return a;}
