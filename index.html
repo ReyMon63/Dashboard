@@ -631,7 +631,7 @@ const KDEF=[
   {key:'cant',label:'Piezas GE',fmt:fInt,pctMetric:false,sub:'Garantías vendidas'},
   {key:'conv',label:'Conversión',fmt:fPct,pctMetric:true,sub:'GE ÷ elegibles'},
   {key:'eleg',label:'Elegibles',fmt:fInt,pctMetric:false,sub:'Base elegible de GE'},
-  {key:'alc',label:'Alcance plan',fmt:fAlc,pctMetric:false,sub:'GE ÷ presupuesto'},
+  {key:'alc',label:'Alcance plan',fmt:fAlc,pctMetric:true,sub:'GE ÷ presupuesto'},
   {key:'ticket',label:'Ticket prom.',fmt:fMoneyFull,pctMetric:false,sub:'Monto ÷ pieza'},
   {key:'tiendas',label:'Tiendas c/venta',fmt:fInt,pctMetric:false,sub:'con al menos 1 GE'},
   {key:'cero',label:'Tiendas sin venta',fmt:fInt,pctMetric:false,sub:'0 GE en el mes',noYtd:true,invert:true},
@@ -835,27 +835,33 @@ function renderSug(){
   renderSugPreview();
 }
 function renderPayability(){
-  // Cobrabilidad: personal cobra si alcanza la meta de GE O la conversión objetivo del formato
+  // Cobrabilidad: personal cobra si alcanza la meta de GE O la conversión objetivo del formato.
+  // Se compara la meta NUEVA (sugerida) contra la ACTUAL (presupuesto que se tenía).
   const ct=BUD2.params.conv_target;
   let html='<div style="border:1px solid var(--border);border-radius:11px;padding:12px 14px;background:var(--surface-1)">';
   html+='<div style="font-size:12.5px;font-weight:700;margin-bottom:2px">¿Cuántas tiendas pueden cobrar comisión con esta meta?</div>';
-  html+='<div class="ph" style="margin-bottom:10px">El personal cobra si la tienda alcanza su meta de GE <strong>o</strong> la conversión objetivo del formato (WM 20% · BA 7% · SC 15%)</div>';
-  html+='<div style="display:flex;gap:18px;flex-wrap:wrap">';
-  let TP=0,TT=0;
+  html+='<div class="ph" style="margin-bottom:10px">El <strong>%</strong> es la proporción de tiendas activas que cobrarían con la <strong>meta nueva</strong> (alcanzando su meta de GE <strong>o</strong> la conversión objetivo: WM 20% · BA 7% · SC 15%). El «<strong>vs anterior</strong>» es cuántas cobraban con el <strong>presupuesto actual</strong>.</div>';
+  html+='<div style="display:flex;gap:20px;flex-wrap:wrap">';
+  let TP=0,TPc=0,TT=0;
   ['WM','BA','SC'].forEach(f=>{
-    const rows=normBud(f);let paid=0,tot=0;
-    rows.forEach(r=>{if(r.pz<=0)return;tot++;const hitMeta=r.sug>0&&r.pz>=r.sug;const hitConv=r.conv>=ct[f];if(hitMeta||hitConv)paid++;});
-    TP+=paid;TT+=tot;const pctv=tot?paid/tot:0;
-    const cl=pctv>=0.75?'up':pctv>=0.6?'':'down';const col=pctv>=0.75?'var(--good-ink)':pctv>=0.6?'var(--warning)':'var(--bad)';
-    html+=`<div style="min-width:120px"><div style="font-size:11px;color:var(--muted);font-weight:600"><span class="fbadge" style="background:${css(FCOL[f])}"></span>${FNAME[f]}</div>
+    const rows=normBud(f);let paid=0,paidCur=0,tot=0;
+    rows.forEach(r=>{if(r.pz<=0)return;tot++;const hitConv=r.conv>=ct[f];
+      if((r.sug>0&&r.pz>=r.sug)||hitConv)paid++;
+      if((r.cur>0&&r.pz>=r.cur)||hitConv)paidCur++;});
+    TP+=paid;TPc+=paidCur;TT+=tot;const pctv=tot?paid/tot:0;const d=paid-paidCur;
+    const col=pctv>=0.75?'var(--good-ink)':pctv>=0.6?'var(--warning)':'var(--bad)';
+    html+=`<div style="min-width:150px"><div style="font-size:11px;color:var(--muted);font-weight:600"><span class="fbadge" style="background:${css(FCOL[f])}"></span>${FNAME[f]}</div>
       <div style="font-size:22px;font-weight:700;color:${col}">${fPct(pctv)}</div>
-      <div class="ph">${fInt(paid)} de ${fInt(tot)} tiendas cobran</div></div>`;
+      <div class="ph" style="font-size:10.5px">cobran con meta nueva · de ${fInt(tot)} activas</div>
+      <div style="font-size:12.5px;margin-top:3px"><strong>${fInt(paid)}</strong> tiendas <span style="color:var(--muted)">vs ${fInt(paidCur)} anterior</span> <span class="${d>=0?'up':'down'}" style="font-weight:700">${d>=0?'+':''}${fInt(d)}</span></div></div>`;
   });
-  const tot=TT?TP/TT:0;
-  html+=`<div style="min-width:120px;border-left:1px solid var(--grid);padding-left:16px"><div style="font-size:11px;color:var(--muted);font-weight:600">GRUPO</div>
-      <div style="font-size:22px;font-weight:700">${fPct(tot)}</div><div class="ph">${fInt(TP)} de ${fInt(TT)}</div></div>`;
+  const tot=TT?TP/TT:0;const dG=TP-TPc;
+  html+=`<div style="min-width:150px;border-left:1px solid var(--grid);padding-left:16px"><div style="font-size:11px;color:var(--muted);font-weight:600">GRUPO</div>
+      <div style="font-size:22px;font-weight:700">${fPct(tot)}</div>
+      <div class="ph" style="font-size:10.5px">cobran con meta nueva · de ${fInt(TT)} activas</div>
+      <div style="font-size:12.5px;margin-top:3px"><strong>${fInt(TP)}</strong> tiendas <span style="color:var(--muted)">vs ${fInt(TPc)} anterior</span> <span class="${dG>=0?'up':'down'}" style="font-weight:700">${dG>=0?'+':''}${fInt(dG)}</span></div></div>`;
   html+='</div>';
-  html+=`<div class="ph" style="margin-top:10px;line-height:1.55">Se calcula comparando la venta real de los últimos 12 meses contra la meta sugerida (que ya pide <strong>+${(BUD3.params.growth*100).toFixed(0)}%</strong> de crecimiento). Es una lectura <strong>exigente a propósito</strong>: si la tienda solo repitiera lo del año pasado, no cobraría; cobra quien crece o quien ya supera la conversión objetivo. El nivel de exigencia (crecimiento y pisos) se ajusta en <em>Parámetros Base</em>.</div>`;
+  html+=`<div class="ph" style="margin-top:10px;line-height:1.55">Lectura: con la meta «Histórico Suavizado» cobrarían <strong>${fInt(TP)}</strong> de ${fInt(TT)} tiendas activas (<strong>${fPct(tot)}</strong>), <strong>${dG>=0?fInt(dG)+' más':fInt(-dG)+' menos'}</strong> que con el presupuesto actual. El % está calculado sobre la venta real de 12 meses vs. la meta (que pide +${(BUD3.params.growth*100).toFixed(0)}% de crecimiento); la exigencia se ajusta en <em>Parámetros Base</em>.</div>`;
   html+='</div>';
   document.getElementById('sugPay').innerHTML=html;
 }
