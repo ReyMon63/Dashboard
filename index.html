@@ -85,6 +85,30 @@ select,input[type=text]{font-family:inherit;font-size:13px;padding:7px 10px;bord
 .spacer{flex:1}
 .iconbtn{border:1px solid var(--border);background:var(--card);color:var(--text-secondary);
   border-radius:8px;padding:7px 11px;cursor:pointer;font-size:13px;font-family:inherit}
+/* botón circular de información */
+.infocirc{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--accent,#2a86e6);
+  background:var(--card);color:var(--accent,#2a86e6);cursor:pointer;font-family:Georgia,'Times New Roman',serif;
+  font-style:italic;font-weight:700;font-size:16px;line-height:1;display:grid;place-items:center;
+  transition:background .15s,color .15s,box-shadow .15s;flex:0 0 auto}
+.infocirc:hover{background:var(--accent,#2a86e6);color:#fff;box-shadow:0 0 0 4px rgba(42,134,230,.15)}
+/* ventana (modal) del instructivo */
+.gide-ov{position:fixed;inset:0;z-index:2147482000;display:none;align-items:center;justify-content:center;
+  background:rgba(6,12,22,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);padding:24px}
+.gide-ov.on{display:flex}
+.gide-win{position:relative;width:min(760px,94vw);max-height:88vh;overflow:auto;border-radius:16px;
+  background:var(--card);border:1px solid var(--border);
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.6);padding:26px 30px 30px;animation:gideIn .28s cubic-bezier(.2,.8,.2,1) both}
+@keyframes gideIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+.gide-win h2{margin:0 0 2px;font-size:20px}
+.gide-win h3{margin:20px 0 6px;font-size:14px;color:var(--accent,#2a86e6);letter-spacing:.01em}
+.gide-win p,.gide-win li{font-size:13.5px;line-height:1.62;color:var(--text-secondary)}
+.gide-win ul{margin:4px 0 0;padding-left:18px}
+.gide-win li{margin-bottom:5px}
+.gide-win .kick{font-size:11px;font-weight:700;letter-spacing:.22em;color:var(--muted);text-transform:uppercase}
+.gide-x{position:sticky;top:0;float:right;margin:-8px -10px 0 0;width:34px;height:34px;border-radius:9px;border:1px solid var(--border);
+  background:var(--card);color:var(--text-secondary);cursor:pointer;font-size:18px;line-height:1;display:grid;place-items:center}
+.gide-x:hover{color:var(--text)}
+.gide-foot{margin-top:22px;padding-top:14px;border-top:1px solid var(--border);font-size:11.5px;color:var(--muted)}
 /* kpi grid */
 .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
 .kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 14px 12px;
@@ -307,11 +331,51 @@ datalist{color:#000}
       <h1>Visor Ejecutivo · Garantías Extendidas</h1>
       <div class="sub">Grupo Walmart · Walmart · Bodega Aurrerá · Sam's Club <span class="tag" id="tagRange"></span><span class="tag" id="tagStores"></span></div>
     </div>
-    <div style="display:flex;gap:8px">
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="infocirc" id="infoBtn" title="Guía de uso del visor" aria-label="Abrir el instructivo">i</button>
       <button class="iconbtn" id="themeBtn">◐ Tema</button>
       <button class="iconbtn" id="logoutBtn" title="Cerrar sesión y volver a la pantalla de acceso">⎋ Salir</button>
     </div>
   </header>
+  <div class="gide-ov" id="infoModal" role="dialog" aria-modal="true" aria-label="Instructivo del visor">
+    <div class="gide-win">
+      <button class="gide-x" id="infoClose" aria-label="Cerrar">✕</button>
+      <div class="kick">Guía de uso</div>
+      <h2>Cómo leer el Visor Ejecutivo de Garantías Extendidas</h2>
+      <p>Este visor concentra la información de <strong>Garantías Extendidas (GE)</strong> de los tres formatos de Grupo Walmart —Walmart, Bodega Aurrerá y Sam's Club— en una sola vista. Todo lo que ves reacciona a los filtros de arriba: cámbialos y las tarjetas, gráficas y el resumen se recalculan al instante.</p>
+
+      <h3>Los filtros de arriba</h3>
+      <ul>
+        <li><strong>Formato</strong>: «Consolidado» suma los tres; o elige Walmart, Bodega o Sam's para ver uno solo.</li>
+        <li><strong>Mes de cierre</strong>: el mes hasta el que quieres ver la información.</li>
+        <li><strong>Base</strong>: «Mes» muestra solo ese mes; «Acum. año (YTD)» acumula de enero a ese mes.</li>
+        <li><strong>Distrito</strong> y <strong>Territorial</strong>: acotan la vista a un distrito o a un territorial/implant. El resumen y las cifras se ajustan a esa selección.</li>
+      </ul>
+
+      <h3>Las tarjetas (indicadores)</h3>
+      <ul>
+        <li><strong>Monto GE / Piezas GE</strong>: venta en pesos y unidades vendidas.</li>
+        <li><strong>Conversión</strong>: piezas de GE entre clientes elegibles. Los cambios se leen en <em>puntos porcentuales (pp)</em>.</li>
+        <li><strong>Alcance plan</strong>: qué tanto de la meta (presupuesto) se cumplió.</li>
+        <li><strong>Ticket promedio, Tiendas con venta y Tiendas sin venta</strong> completan la foto.</li>
+        <li>Cada tarjeta compara contra el <strong>mismo mes del año pasado</strong> (YoY) y contra el <strong>acumulado del año previo</strong> (YTD vs YTD).</li>
+      </ul>
+
+      <h3>Clasificación por estrellas</h3>
+      <p>Cada tienda gana de 0 a 5 estrellas según cinco criterios (venta mínima, crecimiento trimestral, cumplimiento de meta, regularidad y penetración). Es una medida de <strong>madurez</strong> de la tienda, no una calificación del personal.</p>
+
+      <h3>Presupuesto «Histórico Suavizado»</h3>
+      <p>La meta parte de la venta real de cada tienda en 2025 y le pide un crecimiento razonable, repartido mes a mes con la estacionalidad propia de la tienda pero suavizada, para que no dé saltos bruscos. Todos los parámetros viven en el archivo <em>Parámetros Base</em>.</p>
+
+      <h3>Mes en curso (datos proyectados)</h3>
+      <p>Cuando el mes todavía no cierra, el visor <strong>estima cómo terminará</strong> proyectando linealmente los días transcurridos, y lo avisa con una franja amarilla. Ojo en mayo y noviembre: la proyección lineal no capta bien los picos de HotSale y Buen Fin.</p>
+
+      <h3>Descargas</h3>
+      <p>En la sección de presupuesto puedes bajar a Excel el detalle por tienda de cada formato o de los tres juntos.</p>
+
+      <div class="gide-foot">Uso interno · La información aquí mostrada es confidencial. El visor se actualiza automáticamente cuando llegan los datos de los tres formatos.</div>
+    </div>
+  </div>
 
   <div class="controls">
     <div class="ctl">
@@ -608,35 +672,52 @@ function renderRoster(){
   if(nL>0)parts.push(`<span class="down" style="font-weight:700">▼ ${nL} ${nL===1?'baja':'bajas'}</span>`+(isAll?` <span style="color:var(--muted)">(${fmtBreak(mv.left)})</span>`:'')+(nL<=4?` — ${rosterNames(mv.left)}`:''));
   el.innerHTML='🏪 <strong>Movimiento de padrón</strong> (al cierre de '+mlabel(state.mi)+'): '+parts.join(' &nbsp; · &nbsp; ');
 }
+function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s;}
+function scopeInfo(){
+  const f=state.formato,isAll=f==='ALL';
+  const fname=isAll?'Grupo Walmart':FNAME[f];
+  const t=state.territorial!=='ALL'?state.territorial:null;
+  const d=state.distrito!=='ALL'?state.distrito:null;
+  let subj,short;
+  if(t&&d){ subj=`las tiendas de ${t} (distrito ${d})`+(isAll?'':` en ${FNAME[f]}`); short=`${t} · ${d}`; }
+  else if(t){ subj=`las tiendas de ${t}`+(isAll?'':` en ${FNAME[f]}`); short=isAll?t:`${t} · ${FNAME[f]}`; }
+  else if(d){ subj=`el distrito ${d}`+(isAll?'':` en ${FNAME[f]}`); short=isAll?d:`${d} · ${FNAME[f]}`; }
+  else { subj=isAll?'el Grupo Walmart':FNAME[f]; short=fname; }
+  return {subj,short,isAll,fname,filtered:!!(t||d)};
+}
 function renderExec(){
-  const mi=state.mi;const f=state.formato;
-  const isAll=f==='ALL';const name=isAll?'Grupo Walmart':FNAME[f];
+  const mi=state.mi;const f=state.formato;const sc=scopeInfo();
   const d=diagFor(f,mi);
-  document.getElementById('execPh').textContent='Situación de '+name+' al cierre de '+mlabel(mi);
+  document.getElementById('execPh').textContent=sc.short+' · cierre de '+mlabel(mi);
   const chip=document.getElementById('execChip');
   chip.className='chip '+(d.st?d.st.k:'na');chip.textContent=d.st?d.st.t:'—';
   let hl='';
   if(!d.hasBase){
-    hl=`Cierre de <strong>${mlabel(mi)}</strong>: <strong>${fMoneyFull(d.cM.monto)}</strong> en el mes. Aún no hay 12 meses previos para comparar crecimiento anual en este corte.`;
+    hl=`<strong>${cap(sc.subj)}</strong> cerró <strong>${mlabel(mi)}</strong> con <strong>${fMoneyFull(d.cM.monto)}</strong> y <strong>${fInt(d.cM.cant)}</strong> piezas de GE. Todavía no hay 12 meses previos para medir el crecimiento anual en este corte.`;
   }else{
     const pen=`la penetración de GE se ubica en <strong>${fPct(d.cY.conv)}</strong> (${dtxt(d.dppYTD,true)} vs. ${yearOf(mi)-1})`;
     const mesTxt=`cerró <strong>${mlabel(mi)}</strong> con <strong>${fMoneyFull(d.cM.monto)}</strong> (<span class="${dcls(d.montoYoYmes)}">${dtxt(d.montoYoYmes)}</span> vs. mismo mes del año pasado)`;
-    if(isAll){
+    if(sc.isAll&&!sc.filtered){
+      // Consolidado sin filtro: comparación entre formatos
       const worst=['WM','BA','SC'].map(x=>({x,d:diagFor(x,mi)})).sort((a,b)=>a.d.sc-b.d.sc)[0];
-      const best=['WM','BA','SC'].map(x=>({x,d:diagFor(x,mi)})).sort((a,b)=>b.d.sc-a.d.sc)[0];
+      const best =['WM','BA','SC'].map(x=>({x,d:diagFor(x,mi)})).sort((a,b)=>b.d.sc-a.d.sc)[0];
       if(d.montoYoYmes>=0&&d.montoYoYytd<0)
-        hl=`El grupo ${mesTxt}, pero el <strong>acumulado del año va ${dtxt(d.montoYoYytd)}</strong> y ${pen}. Un mes fuerte no compensa un año por debajo de ${yearOf(mi)-1}: el foco de riesgo es <strong>${FNAME[worst.x]}</strong>, mientras <strong>${FNAME[best.x]}</strong> es el más sólido.`;
+        hl=`El <strong>Grupo Walmart</strong> ${mesTxt}, pero el <strong>acumulado del año va ${dtxt(d.montoYoYytd)}</strong> y ${pen}. Un buen mes no compensa un año por debajo de ${yearOf(mi)-1}: el foco de riesgo es <strong>${FNAME[worst.x]}</strong>, mientras <strong>${FNAME[best.x]}</strong> es el más sólido.`;
       else if(d.montoYoYytd>=0)
-        hl=`El grupo acumula <strong>${fMoneyFull(d.cY.monto)}</strong> en el año (<span class="up">${dtxt(d.montoYoYytd)}</span> vs. ${yearOf(mi)-1}) y ${pen}. <strong>${FNAME[best.x]}</strong> lidera; <strong>${FNAME[worst.x]}</strong> requiere atención.`;
+        hl=`El <strong>Grupo Walmart</strong> acumula <strong>${fMoneyFull(d.cY.monto)}</strong> en el año (<span class="up">${dtxt(d.montoYoYytd)}</span> vs. ${yearOf(mi)-1}) y ${pen}. Quien más aporta es <strong>${FNAME[best.x]}</strong> y el que más atención pide es <strong>${FNAME[worst.x]}</strong>.`;
       else
-        hl=`El grupo va <strong>${dtxt(d.montoYoYytd)}</strong> en el acumulado del año y ${pen}. El foco de riesgo es <strong>${FNAME[worst.x]}</strong>.`;
+        hl=`El <strong>Grupo Walmart</strong> va <strong>${dtxt(d.montoYoYytd)}</strong> en el acumulado del año y ${pen}. El foco de riesgo está en <strong>${FNAME[worst.x]}</strong>.`;
     }else{
+      // Ámbito específico: un formato y/o un distrito/territorial
       let cierre;
-      if(d.st.k==='t1')cierre=`Cae en ventas acumuladas y pierde penetración: <strong>requiere acción prioritaria</strong>.`;
-      else if(d.st.k==='t2')cierre=(d.montoYoYmes>0.1?`Buen mes, pero `:'')+`el año va por debajo${d.dppYTD<0?' y la penetración se erosiona':''}: <strong>vigilar de cerca</strong>.`;
-      else if(d.st.k==='t3')cierre=`Se mantiene cerca del año pasado: <strong>estable</strong>, sin crecimiento claro.`;
-      else cierre=`<strong>Crece</strong> en el año con penetración ${d.dppYTD>=0?'al alza':'sostenida'}.`;
-      hl=`${name} ${mesTxt}. El <strong>acumulado del año va ${dtxt(d.montoYoYytd)}</strong> y ${pen}. ${cierre}`;
+      if(d.st.k==='t1')cierre=`Cae en ventas acumuladas y pierde penetración, así que <strong>requiere acción prioritaria</strong>.`;
+      else if(d.st.k==='t2')cierre=(d.montoYoYmes>0.1?`El mes salió bien, pero `:'')+`el año va por debajo${d.dppYTD<0?' y la penetración se erosiona':''}: conviene <strong>vigilarlo de cerca</strong>.`;
+      else if(d.st.k==='t3')cierre=`Se mantiene muy cerca del año pasado: <strong>estable</strong>, todavía sin crecimiento claro.`;
+      else cierre=`<strong>Crece</strong> en el año, con la penetración ${d.dppYTD>=0?'al alza':'sostenida'}.`;
+      const arranque=sc.filtered
+        ? [`Mirando <strong>${sc.subj}</strong>, la operación`,`En <strong>${sc.subj}</strong>, el negocio`,`<strong>${cap(sc.subj)}</strong>`][mi%3]
+        : `<strong>${sc.fname}</strong>`;
+      hl=`${arranque} ${mesTxt}. Su <strong>acumulado del año va ${dtxt(d.montoYoYytd)}</strong> y ${pen}. ${cierre}`;
     }
   }
   document.getElementById('execHeadline').innerHTML=hl;
@@ -1108,6 +1189,15 @@ seg('segRankMetric',v=>{state.rankMetric=v;renderRank();});
 })();
 document.getElementById('themeBtn').onclick=()=>{const r=document.documentElement;r.dataset.theme=r.dataset.theme==='dark'?'light':'dark';refreshAll();if(document.getElementById('storeResult').classList.contains('on'))document.getElementById('storeGo').click();};
 {const lo=document.getElementById('logoutBtn');if(lo)lo.onclick=()=>location.reload();}
+/* instructivo (ventana) */
+(function(){const ov=document.getElementById('infoModal');if(!ov)return;
+  const open=()=>{ov.classList.add('on');};
+  const close=()=>{ov.classList.remove('on');};
+  document.getElementById('infoBtn').onclick=open;
+  document.getElementById('infoClose').onclick=close;
+  ov.addEventListener('click',e=>{if(e.target===ov)close();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+})();
 document.getElementById('storeGo').onclick=()=>{const s=findStore(document.getElementById('storeInput').value);
   if(s){document.getElementById('storeHint').textContent='';renderStore(s);}else{document.getElementById('storeHint').textContent='No se encontró la tienda.';}};
 document.getElementById('storeInput').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('storeGo').click();});
