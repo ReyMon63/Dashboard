@@ -735,11 +735,15 @@ function renderOpp(){
   rows.forEach(r=>{const[si,,monto,cant,meta,eleg]=r;const c=eleg?cant/eleg:0;if(c<avgConv&&eleg>0){extraPiezas+=(avgConv-c)*eleg;}});
   const extraMonto=extraPiezas*ticket;
   const noConv=agg[3]-agg[1]; // elegibles - piezas
+  const stCount=rows.length||1;                                   // tiendas en el ámbito
+  const dim=(()=>{const[y,m]=MONTHS[mi].split('-').map(Number);return new Date(y,m,0).getDate();})();
+  const perDay=noConv/stCount/dim;                                // elegibles sin GE por tienda y día
+  const perDayTxt=perDay>=10?fInt(Math.round(perDay)):perDay.toFixed(1);
   document.getElementById('oppPh').textContent='Si las tiendas por debajo del promedio ('+fPct(avgConv)+') alcanzaran el promedio de '+(f==='ALL'?'su grupo':FNAME[f])+' · '+mlabel(mi);
   document.getElementById('oppBox').innerHTML=`
     <div class="oppc"><div class="olb">Piezas potenciales</div><div class="ov">+${fInt(extraPiezas)}</div><div class="od">GE adicionales al mes cerrando la brecha a promedio</div></div>
     <div class="oppc"><div class="olb">Monto potencial</div><div class="ov">${fMoney(extraMonto)}</div><div class="od">estimado con ticket promedio de ${fMoneyFull(ticket)}</div></div>
-    <div class="oppc"><div class="olb">Elegibles sin GE</div><div class="ov">${fInt(noConv)}</div><div class="od">base no convertida este mes</div></div>
+    <div class="oppc"><div class="olb">Elegibles sin GE</div><div class="ov">${fInt(noConv)}</div><div class="od">base no convertida este mes, equivalente a ${perDayTxt} Elegibles diarios por tienda</div></div>
     <div class="oppc"><div class="olb">Conversión actual</div><div class="ov">${fPct(avgConv)}</div><div class="od">del ${f==='ALL'?'consolidado':FNAME[f]}</div></div>`;
   // pareto
   const arr=rows.map(r=>r[2]).filter(x=>x>0).sort((a,b)=>b-a);const total=arr.reduce((a,b)=>a+b,0);
