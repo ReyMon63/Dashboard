@@ -458,7 +458,7 @@ datalist{color:#000}
   <div class="grid2b">
     <div class="panel">
       <div class="phrow">
-        <div><h2>Crecimiento vs. año previo</h2><div class="ph">Mismo mes en 2024 · 2025 · 2026</div></div>
+        <div><h2>Crecimiento vs. años previos</h2><div class="ph">Cada mes del año natural, comparado por año</div></div>
         <div class="seg sm" id="segYoY">
           <button data-v="monto" class="active">Monto $</button>
           <button data-v="cant">Piezas</button>
@@ -885,18 +885,22 @@ function renderPie(){
   requestAnimationFrame(()=>{ if(chTrend)chTrend.resize(); if(chPie)chPie.resize(); });
 }
 function renderYoY(){
-  const key=state.yoy;const f=state.formato;
-  const mon=monOf(state.mi);
-  const years=[2024,2025,2026];
-  const idxs=years.map(y=>MONTHS.indexOf(y+'-'+mon)).filter(i=>i>=0);
-  const labels=idxs.map(i=>mlabel(i));
-  const data=idxs.map(i=>metricsFrom(aggAt(f,i))[key]);
+  const key=state.yoy, f=state.formato;
+  const MESL=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  let years=[...new Set(MONTHS.map(m=>+m.split('-')[0]))].sort((a,b)=>a-b);
+  const MAXYRS=4; if(years.length>MAXYRS) years=years.slice(-MAXYRS);   // ventana móvil: últimos 4 años
+  const soft=['#c7d0da','#a9c8b0','#e6c489','#c9b3e0'];                   // años previos (viejo→nuevo)
+  const strong='#2a86e6';                                                // año más reciente, destacado
+  const datasets=years.map((y,i)=>{
+    const isLast=i===years.length-1;
+    const data=MESL.map((_,m)=>{const idx=MONTHS.indexOf(y+'-'+String(m+1).padStart(2,'0'));return idx>=0?metricsFrom(aggAt(f,idx))[key]:null;});
+    return {label:String(y),data,backgroundColor:isLast?strong:soft[i%soft.length],borderRadius:3,barPercentage:.92,categoryPercentage:.8};
+  });
   const o=baseOpts();o.scales.y.ticks.callback=fmtAxis(key);
-  o.plugins.tooltip.callbacks={label:c=>fmtVal(key)(c.parsed.y)};
-  o.plugins.legend={display:false};
+  o.plugins.tooltip.callbacks={label:c=>c.dataset.label+': '+fmtVal(key)(c.parsed.y)};
+  o.plugins.legend={display:true,position:'top',align:'end',labels:{boxWidth:10,boxHeight:10,usePointStyle:true,pointStyle:'rectRounded',color:mutedC(),font:{size:11}}};
   if(chYoY)chYoY.destroy();
-  chYoY=new Chart(document.getElementById('chYoY'),{type:'bar',data:{labels,datasets:[{data:data,
-    backgroundColor:css(FCOL[f]),borderRadius:5,barPercentage:.55}]},options:o});
+  chYoY=new Chart(document.getElementById('chYoY'),{type:'bar',data:{labels:MESL,datasets},options:o});
 }
 /* ============ opportunity + pareto ============ */
 function renderOpp(){
