@@ -424,7 +424,7 @@ datalist{color:#000}
 
   <div class="kpis" id="kpis"></div>
 
-  <div class="grid2">
+  <div class="grid2" id="gridTrendPie">
     <div class="panel">
       <div class="phrow">
         <div><h2>Tendencia mensual</h2><div class="ph" id="trendPh"></div></div>
@@ -439,7 +439,7 @@ datalist{color:#000}
       <div class="chartbox"><canvas id="chTrend"></canvas></div>
       <div class="legend" id="trendLegend"></div>
     </div>
-    <div class="panel">
+    <div class="panel" id="piePanel">
       <h2>Venta por formato</h2>
       <div class="ph" id="piePh"></div>
       <div class="chartbox sm"><canvas id="chPie"></canvas></div>
@@ -581,6 +581,14 @@ function segFilt(rows,keyFn){return rows.filter(r=>segPass(keyFn?keyFn(r):r.si))
 const recsByMonth={};
 for(const _r of DB.recs){(recsByMonth[_r[1]]||(recsByMonth[_r[1]]=[])).push(_r);}
 function segActive(){return state.distrito!=='ALL'||state.territorial!=='ALL';}
+// formatos realmente presentes en la selección actual (formato + distrito/territorial)
+function formatsInScope(){
+  const base=state.formato==='ALL'?['WM','BA','SC']:[state.formato];
+  if(!segActive())return base;
+  const set=new Set();
+  for(const s of DB.stores){ if(base.indexOf(s.f)>=0 && segPass(s.i)) set.add(s.f); }
+  return base.filter(f=>set.has(f));
+}
 /* aggregate [monto,cant,meta,eleg,ntiendas] for a format+month, or ALL=sum.
    Con filtro de Distrito/Territorial activo se recalcula desde las tiendas del segmento. */
 function aggAt(f,mi){
@@ -779,10 +787,10 @@ function fmtVal(key){return key==='monto'||key==='ticket'?fMoneyFull:key==='conv
 
 function renderTrend(){
   const key=state.metric;const labels=MONTHS.map((_,i)=>mlabel(i));
-  const show = state.formato==='ALL'?['WM','BA','SC']:[state.formato];
+  const show = formatsInScope();
   const ds=show.map(f=>({label:FNAME[f],data:metricSeries(f,key),borderColor:css(FCOL[f]),backgroundColor:css(FCOL[f]),
     borderWidth:2,pointRadius:0,pointHoverRadius:5,tension:.25}));
-  if(state.formato==='ALL'){ds.push({label:'Consolidado',data:metricSeries('ALL',key),borderColor:css('--cons'),
+  if(show.length>1){ds.push({label:'Consolidado',data:metricSeries('ALL',key),borderColor:css('--cons'),
     borderWidth:2,borderDash:[5,4],pointRadius:0,pointHoverRadius:5,tension:.25});}
   const o=baseOpts();o.scales.y.ticks.callback=fmtAxis(key);
   o.plugins.tooltip.callbacks={label:c=>c.dataset.label+': '+fmtVal(key)(c.parsed.y)};
@@ -793,19 +801,24 @@ function renderTrend(){
   if(chTrend)chTrend.destroy();
   chTrend=new Chart(document.getElementById('chTrend'),{type:'line',data:{labels,datasets:ds},options:o,plugins:[selLine]});
   const lg=document.getElementById('trendLegend');lg.innerHTML=ds.map(d=>`<span><span class="dot" style="background:${d.borderColor}"></span>${d.label}</span>`).join('');
-  document.getElementById('trendPh').textContent=({monto:'Monto GE en pesos',cant:'Piezas de GE',conv:'Conversión (GE ÷ elegibles)',alc:'Alcance de plan (GE ÷ presupuesto)',ticket:'Ticket promedio por GE'})[key]+' · '+ (state.formato==='ALL'?'por formato':FNAME[state.formato]);
+  document.getElementById('trendPh').textContent=({monto:'Monto GE en pesos',cant:'Piezas de GE',conv:'Conversión (GE ÷ elegibles)',alc:'Alcance de plan (GE ÷ presupuesto)',ticket:'Ticket promedio por GE'})[key]+' · '+ (show.length>1?'por formato':(FNAME[show[0]]||'—'));
 }
 function renderPie(){
-  const mi=state.mi;const montos=F.map(f=>metricsFrom(aggAt(f,mi)).monto);
+  const mi=state.mi;const fmts=formatsInScope();
+  // el pastel solo tiene sentido si hay más de un formato en la selección
+  const panel=document.getElementById('piePanel'),grid=document.getElementById('gridTrendPie');
+  if(fmts.length<2){ if(panel)panel.style.display='none'; if(grid)grid.style.gridTemplateColumns='1fr'; setTimeout(()=>{if(chTrend)chTrend.resize();},30); return; }
+  if(panel)panel.style.display=''; if(grid)grid.style.gridTemplateColumns=''; setTimeout(()=>{if(chTrend)chTrend.resize();},30);
+  const montos=fmts.map(f=>metricsFrom(aggAt(f,mi)).monto);
   const total=montos.reduce((a,b)=>a+b,0)||1;
   if(chPie)chPie.destroy();
-  chPie=new Chart(document.getElementById('chPie'),{type:'doughnut',data:{labels:F.map(f=>FNAME[f]),
-    datasets:[{data:montos,backgroundColor:F.map(f=>css(FCOL[f])),borderColor:css('--surface-1'),borderWidth:2}]},
+  chPie=new Chart(document.getElementById('chPie'),{type:'doughnut',data:{labels:fmts.map(f=>FNAME[f]),
+    datasets:[{data:montos,backgroundColor:fmts.map(f=>css(FCOL[f])),borderColor:css('--surface-1'),borderWidth:2}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'58%',
       plugins:{legend:{display:false},tooltip:{backgroundColor:css('--card'),titleColor:css('--text-primary'),bodyColor:textC(),borderColor:css('--border'),borderWidth:1,padding:10,cornerRadius:8,
         callbacks:{label:c=>c.label+': '+fMoneyFull(c.parsed)+' ('+(c.parsed/total*100).toFixed(0)+'%)'}}}}});
   document.getElementById('piePh').textContent='Participación del monto GE · '+mlabel(mi);
-  document.getElementById('pieLegend').innerHTML=F.map((f,i)=>`<span><span class="dot" style="background:${css(FCOL[f])}"></span>${FNAME[f]} ${(montos[i]/total*100).toFixed(0)}% · ${fMoney(montos[i])}</span>`).join('');
+  document.getElementById('pieLegend').innerHTML=fmts.map((f,i)=>`<span><span class="dot" style="background:${css(FCOL[f])}"></span>${FNAME[f]} ${(montos[i]/total*100).toFixed(0)}% · ${fMoney(montos[i])}</span>`).join('');
 }
 function renderYoY(){
   const key=state.yoy;const f=state.formato;
