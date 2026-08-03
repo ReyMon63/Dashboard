@@ -711,39 +711,72 @@ function scopeInfo(){
   else { subj=isAll?'el Grupo Walmart':FNAME[f]; short=fname; }
   return {subj,short,isAll,fname,filtered:!!(t||d)};
 }
+function joinList(a){a=a.filter(Boolean);if(!a.length)return'';if(a.length===1)return a[0];if(a.length===2)return a[0]+' y '+a[1];return a.slice(0,-1).join(', ')+' y '+a[a.length-1];}
+function deOf(s){return /^el\s/i.test(s)?'del '+s.slice(3):'de '+s;}
+const DIAGDEF=[
+  {key:'monto',  lbl:'Monto GE',          rec:'el Monto GE',          pct:false,inv:false},
+  {key:'cant',   lbl:'Piezas GE',         rec:'las Piezas GE',        pct:false,inv:false},
+  {key:'conv',   lbl:'Conversión',        rec:'la Conversión',        pct:true, inv:false},
+  {key:'eleg',   lbl:'Elegibles',         rec:'los Elegibles',        pct:false,inv:false},
+  {key:'alc',    lbl:'Alcance al plan',   rec:'el Alcance al plan',   pct:true, inv:false},
+  {key:'ticket', lbl:'Ticket promedio',   rec:'el Ticket promedio',   pct:false,inv:false},
+  {key:'tiendas',lbl:'Tiendas con venta', rec:'las Tiendas con venta',pct:false,inv:false},
+  {key:'cero',   lbl:'Tiendas sin venta', rec:'las Tiendas sin venta',pct:false,inv:true},
+];
+const RECPRIO=['conv','cero','alc','cant','monto','ticket','tiendas','eleg'];
+function diagnoseKPIs(f,mi,base){
+  const pmi=priorYearIdx(mi); if(pmi===null)return null;
+  const cur=kpiValues(f,mi,base), prev=kpiValues(f,pmi,base);
+  const badDown=[],badUp=[],goodUp=[],goodDown=[];
+  DIAGDEF.forEach(c=>{
+    const cv=cur[c.key], pv=prev[c.key]; let up,mag;
+    if(c.pct){ const dd=(cv-pv)*100; mag=Math.abs(dd); if(mag<0.3)return; up=dd>=0; }
+    else { if(!pv)return; const r=(cv-pv)/Math.abs(pv); mag=Math.abs(r*100); if(mag<1)return; up=r>=0; }
+    const good=up!==c.inv, it={...c,mag,up};
+    if(good){(up?goodUp:goodDown).push(it);}else{(up?badUp:badDown).push(it);}
+  });
+  [badDown,badUp,goodUp,goodDown].forEach(a=>a.sort((x,y)=>y.mag-x.mag));
+  return {badDown,badUp,goodUp,goodDown};
+}
+function recos(neg){return neg.slice().sort((a,b)=>RECPRIO.indexOf(a.key)-RECPRIO.indexOf(b.key)).slice(0,2).map(c=>c.rec);}
 function renderExec(){
-  const mi=state.mi;const f=state.formato;const sc=scopeInfo();
+  const mi=state.mi;const f=state.formato;const sc=scopeInfo();const base=state.base;
   const d=diagFor(f,mi);
   document.getElementById('execPh').textContent=sc.short+' · cierre de '+mlabel(mi);
   const chip=document.getElementById('execChip');
   chip.className='chip '+(d.st?d.st.k:'na');chip.textContent=d.st?d.st.t:'—';
+  const subj=cap(sc.subj);
+  const dg=diagnoseKPIs(f,mi,base);
   let hl='';
-  if(!d.hasBase){
-    hl=`<strong>${cap(sc.subj)}</strong> cerró <strong>${mlabel(mi)}</strong> con <strong>${fMoneyFull(d.cM.monto)}</strong> y <strong>${fInt(d.cM.cant)}</strong> piezas de GE. Todavía no hay 12 meses previos para medir el crecimiento anual en este corte.`;
+  if(!dg){
+    hl=`<strong>${subj}</strong> cerró <strong>${mlabel(mi)}</strong>, pero es un corte demasiado nuevo para compararlo contra el año pasado: todavía no hay diagnóstico de tendencia.`;
   }else{
-    const pen=`la penetración de GE se ubica en <strong>${fPct(d.cY.conv)}</strong> (${dtxt(d.dppYTD,true)} vs. ${yearOf(mi)-1})`;
-    const mesTxt=`cerró <strong>${mlabel(mi)}</strong> con <strong>${fMoneyFull(d.cM.monto)}</strong> (<span class="${dcls(d.montoYoYmes)}">${dtxt(d.montoYoYmes)}</span> vs. mismo mes del año pasado)`;
-    if(sc.isAll&&!sc.filtered){
-      // Consolidado sin filtro: comparación entre formatos
-      const worst=['WM','BA','SC'].map(x=>({x,d:diagFor(x,mi)})).sort((a,b)=>a.d.sc-b.d.sc)[0];
-      const best =['WM','BA','SC'].map(x=>({x,d:diagFor(x,mi)})).sort((a,b)=>b.d.sc-a.d.sc)[0];
-      if(d.montoYoYmes>=0&&d.montoYoYytd<0)
-        hl=`El <strong>Grupo Walmart</strong> ${mesTxt}, pero el <strong>acumulado del año va ${dtxt(d.montoYoYytd)}</strong> y ${pen}. Un buen mes no compensa un año por debajo de ${yearOf(mi)-1}: el foco de riesgo es <strong>${FNAME[worst.x]}</strong>, mientras <strong>${FNAME[best.x]}</strong> es el más sólido.`;
-      else if(d.montoYoYytd>=0)
-        hl=`El <strong>Grupo Walmart</strong> acumula <strong>${fMoneyFull(d.cY.monto)}</strong> en el año (<span class="up">${dtxt(d.montoYoYytd)}</span> vs. ${yearOf(mi)-1}) y ${pen}. Quien más aporta es <strong>${FNAME[best.x]}</strong> y el que más atención pide es <strong>${FNAME[worst.x]}</strong>.`;
-      else
-        hl=`El <strong>Grupo Walmart</strong> va <strong>${dtxt(d.montoYoYytd)}</strong> en el acumulado del año y ${pen}. El foco de riesgo está en <strong>${FNAME[worst.x]}</strong>.`;
+    const st=d.st.k, statusT=d.st.t;
+    const per = base==='YTD' ? ' en el acumulado del año, frente al mismo periodo del año pasado' : ' frente al mismo mes del año pasado';
+    const decl=dg.badDown.length?`caídas en ${joinList(dg.badDown.map(c=>c.lbl))}`:'';
+    const rise=dg.badUp.length?`un aumento en ${joinList(dg.badUp.map(c=>c.lbl))}`:'';
+    const gain=dg.goodUp.length?`avances en ${joinList(dg.goodUp.map(c=>c.lbl))}`:'';
+    const redu=dg.goodDown.length?`una reducción en ${joinList(dg.goodDown.map(c=>c.lbl))}`:'';
+    const negP=joinList([decl,rise]), posP=joinList([gain,redu]);
+    const rc=recos([...dg.badDown,...dg.badUp]);
+    if(st==='t1'||st==='t2'){
+      hl=`El diagnóstico ${deOf(sc.subj)} como <strong>«${statusT}»</strong> se debe principalmente a ${negP||'un desempeño por debajo del año previo'}${per}.`;
+      if(posP) hl+=` Del lado favorable, se observan ${posP}.`;
+      hl+= rc.length?` Conviene concentrar estrategias en ${joinList(rc)} para darle la vuelta a la situación.`:` Conviene reforzar la ejecución comercial para revertir la tendencia.`;
+    }else if(st==='t3'){
+      hl=`El diagnóstico ${deOf(sc.subj)} es <strong>«Estable»</strong>: la mayoría de los indicadores se mueven poco${per}`;
+      const bits=[];if(negP)bits.push('con '+negP);if(posP)bits.push((negP?'aunque también ':'con ')+posP);
+      hl+= bits.length?', '+joinList(bits)+'.':'.';
+      hl+= rc.length?` Para dar el salto a crecimiento, el foco debería estar en ${joinList(rc)}.`:` Para dar el salto a crecimiento conviene dinamizar la venta de GE.`;
     }else{
-      // Ámbito específico: un formato y/o un distrito/territorial
-      let cierre;
-      if(d.st.k==='t1')cierre=`Cae en ventas acumuladas y pierde penetración, así que <strong>requiere acción prioritaria</strong>.`;
-      else if(d.st.k==='t2')cierre=(d.montoYoYmes>0.1?`El mes salió bien, pero `:'')+`el año va por debajo${d.dppYTD<0?' y la penetración se erosiona':''}: conviene <strong>vigilarlo de cerca</strong>.`;
-      else if(d.st.k==='t3')cierre=`Se mantiene muy cerca del año pasado: <strong>estable</strong>, todavía sin crecimiento claro.`;
-      else cierre=`<strong>Crece</strong> en el año, con la penetración ${d.dppYTD>=0?'al alza':'sostenida'}.`;
-      const arranque=sc.filtered
-        ? [`Mirando <strong>${sc.subj}</strong>, la operación`,`En <strong>${sc.subj}</strong>, el negocio`,`<strong>${cap(sc.subj)}</strong>`][mi%3]
-        : `<strong>${sc.fname}</strong>`;
-      hl=`${arranque} ${mesTxt}. Su <strong>acumulado del año va ${dtxt(d.montoYoYytd)}</strong> y ${pen}. ${cierre}`;
+      hl=`El diagnóstico ${deOf(sc.subj)} es <strong>«${statusT}»</strong>, impulsado por ${posP||'un desempeño por arriba del año previo'}${per}.`;
+      if(negP) hl+=` Aún así, restan ${negP}.`;
+      hl+= rc.length?` El reto es sostener el avance sin descuidar ${joinList(rc)}.`:` El reto es sostener el avance.`;
+    }
+    if(sc.isAll&&!sc.filtered){
+      const arr=['WM','BA','SC'].map(x=>({x,s:diagFor(x,mi).sc}));
+      const best=arr.slice().sort((a,b)=>b.s-a.s)[0], worst=arr.slice().sort((a,b)=>a.s-b.s)[0];
+      if(best.x!==worst.x) hl+=` Entre formatos, <strong>${FNAME[best.x]}</strong> es el más sólido y <strong>${FNAME[worst.x]}</strong> el que más pesa en el resultado.`;
     }
   }
   document.getElementById('execHeadline').innerHTML=hl;
@@ -825,8 +858,8 @@ function renderPie(){
   const mi=state.mi;const fmts=formatsInScope();
   // el pastel solo tiene sentido si hay más de un formato en la selección
   const panel=document.getElementById('piePanel'),grid=document.getElementById('gridTrendPie');
-  if(fmts.length<2){ if(panel)panel.style.display='none'; if(grid)grid.style.gridTemplateColumns='1fr'; setTimeout(()=>{if(chTrend)chTrend.resize();},30); return; }
-  if(panel)panel.style.display=''; if(grid)grid.style.gridTemplateColumns=''; setTimeout(()=>{if(chTrend)chTrend.resize();},30);
+  if(fmts.length<2){ if(chPie){chPie.destroy();chPie=null;} if(panel)panel.style.display='none'; if(grid)grid.style.gridTemplateColumns='1fr'; requestAnimationFrame(()=>{if(chTrend)chTrend.resize();}); return; }
+  if(panel)panel.style.display=''; if(grid)grid.style.gridTemplateColumns='';
   const montos=fmts.map(f=>metricsFrom(aggAt(f,mi)).monto);
   const total=montos.reduce((a,b)=>a+b,0)||1;
   if(chPie)chPie.destroy();
@@ -837,6 +870,8 @@ function renderPie(){
         callbacks:{label:c=>c.label+': '+fMoneyFull(c.parsed)+' ('+(c.parsed/total*100).toFixed(0)+'%)'}}}}});
   document.getElementById('piePh').textContent='Participación del monto GE · '+mlabel(mi);
   document.getElementById('pieLegend').innerHTML=fmts.map((f,i)=>`<span><span class="dot" style="background:${css(FCOL[f])}"></span>${FNAME[f]} ${(montos[i]/total*100).toFixed(0)}% · ${fMoney(montos[i])}</span>`).join('');
+  // tras restablecer la rejilla, reajustar ambas gráficas al encuadre correcto
+  requestAnimationFrame(()=>{ if(chTrend)chTrend.resize(); if(chPie)chPie.resize(); });
 }
 function renderYoY(){
   const key=state.yoy;const f=state.formato;
