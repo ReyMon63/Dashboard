@@ -132,8 +132,14 @@ def main():
     run(["git","add","index.html","state.json"], REPO)
     run(["git","-c","user.name=Visor GE Bot","-c","user.email=ReyMon63@users.noreply.github.com",
          "commit","-q","-m",f"Actualización · {cur_month} corte {asof}/{dim}"], REPO)
-    tok=os.environ.get("GH_TOKEN","")
-    url=f"https://x-access-token:{tok}@github.com/ReyMon63/Dashboard.git" if tok else "origin"
+    tok=os.environ.get("VISOR_GH_TOKEN","").strip()
+    if not tok:
+        for p in ("~/.gh_token", os.path.join(REPO,".gh_token")):
+            p=os.path.expanduser(p)
+            if os.path.exists(p): tok=open(p).read().strip(); break
+    if not tok:
+        print("No hay token de GitHub (VISOR_GH_TOKEN o ~/.gh_token). index.html quedó armado pero no lo publiqué."); return
+    url=f"https://x-access-token:{tok}@github.com/ReyMon63/Dashboard.git"
     run(["git","push",url,"main"], REPO)
     print("Publicado en GitHub Pages.")
 
