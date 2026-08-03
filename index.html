@@ -85,6 +85,7 @@ select,input[type=text]{font-family:inherit;font-size:13px;padding:7px 10px;bord
 .spacer{flex:1}
 .iconbtn{border:1px solid var(--border);background:var(--card);color:var(--text-secondary);
   border-radius:8px;padding:7px 11px;cursor:pointer;font-size:13px;font-family:inherit}
+.iconbtn:disabled{opacity:.38;cursor:not-allowed;filter:grayscale(.4)}
 /* botón circular de información */
 .infocirc{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--accent,#2a86e6);
   background:var(--card);color:var(--accent,#2a86e6);cursor:pointer;font-family:Georgia,'Times New Roman',serif;
@@ -588,6 +589,23 @@ function formatsInScope(){
   const set=new Set();
   for(const s of DB.stores){ if(base.indexOf(s.f)>=0 && segPass(s.i)) set.add(s.f); }
   return base.filter(f=>set.has(f));
+}
+// formatos con tiendas bajo el filtro de segmento (distrito/territorial) — para las descargas,
+// que arman el presupuesto por segmento sin importar el formato que se esté viendo
+function formatsWithData(){
+  if(!segActive())return ['WM','BA','SC'];
+  const set=new Set();
+  for(const s of DB.stores){ if(segPass(s.i)) set.add(s.f); }
+  return ['WM','BA','SC'].filter(f=>set.has(f));
+}
+function updateDownloadBtns(){
+  const av=formatsWithData();
+  document.querySelectorAll('.xls').forEach(b=>{
+    const x=b.dataset.x;
+    const ok = x==='ALL' ? av.length>0 : av.indexOf(x)>=0;
+    b.disabled=!ok;
+    b.title = ok ? '' : 'Sin tiendas de este formato en el filtro seleccionado';
+  });
 }
 /* aggregate [monto,cant,meta,eleg,ntiendas] for a format+month, or ALL=sum.
    Con filtro de Distrito/Territorial activo se recalcula desde las tiendas del segmento. */
@@ -1179,7 +1197,7 @@ function renderStore(s){
 /* ============ wiring ============ */
 function seg(id,cb){document.querySelectorAll('#'+id+' button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('active'));b.classList.add('active');cb(b.dataset.v);});}
-function refreshAll(){updProjBanner();renderExec();renderKPIs();renderTrend();renderPie();renderYoY();renderOpp();renderStars();renderBudget();renderSug();renderRank();}
+function refreshAll(){updProjBanner();renderExec();renderKPIs();renderTrend();renderPie();renderYoY();renderOpp();renderStars();renderBudget();renderSug();renderRank();updateDownloadBtns();}
 function initMonths(){const s=document.getElementById('selMonth');s.innerHTML=MONTHS.map((m,i)=>`<option value="${i}" ${i===NM-1?'selected':''}>${mlabel(i)}</option>`).join('');
   s.onchange=()=>{state.mi=+s.value;refreshAll();};}
 seg('segFormato',v=>{state.formato=v;refreshAll();});
@@ -1214,7 +1232,7 @@ document.getElementById('themeBtn').onclick=()=>{const r=document.documentElemen
 document.getElementById('storeGo').onclick=()=>{const s=findStore(document.getElementById('storeInput').value);
   if(s){document.getElementById('storeHint').textContent='';renderStore(s);}else{document.getElementById('storeHint').textContent='No se encontró la tienda.';}};
 document.getElementById('storeInput').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('storeGo').click();});
-document.querySelectorAll('.xls').forEach(b=>b.onclick=()=>{document.getElementById('sugStatus').textContent='Generando…';setTimeout(()=>buildExcel(b.dataset.x),30);});
+document.querySelectorAll('.xls').forEach(b=>b.onclick=()=>{if(b.disabled)return;document.getElementById('sugStatus').textContent='Generando…';setTimeout(()=>buildExcel(b.dataset.x),30);});
 function mkToggle(btnId,wrapId,showTxt,hideTxt){const b=document.getElementById(btnId),w=document.getElementById(wrapId);
   b.onclick=()=>{const open=w.classList.toggle('open');b.textContent=(open?'▾ ':'▸ ')+(open?hideTxt:showTxt);};}
 mkToggle('tglSug','wrapSug','Ver detalle por tienda','Ocultar detalle');
