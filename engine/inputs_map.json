@@ -4,6 +4,7 @@
     "Visor Ejecutivo": "1Ll8n81pc8-p_pMWV-Ire2TeCLs38Lsgo",
     "Avance Ventas Bot": "1HDnP43cnizYNpqQcdsVQXCvnUeMIBdFh"
   },
+  "gh_token": {"title": "visor_gh_token.txt", "folder": "Visor Ejecutivo", "id": "1XIvwdIhZsfWeXeGOKmugLK4m0ORiyk24", "_uso": "token de escritura a GitHub; descargar y guardar como Dashboard/.gh_token"},
   "files": [
     {"engine_name": "Historico_WM.xlsx", "title": "Histórico WM (con estrellas).xlsx", "folder": "Visor Ejecutivo",   "id": "1GXMDWPNcYjzqPyfnUiVAA3-4xGePocv6"},
     {"engine_name": "Historico_BA.xlsx", "title": "Histórico BA (con estrellas).xlsx", "folder": "Visor Ejecutivo",   "id": "13_kK_GRPKcufnjAQKUHvRH5lEWfa5vpM"},
