@@ -1,0 +1,122 @@
+<div id="ge-gate" aria-modal="true" role="dialog">
+  <svg id="ge-gate-bg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <linearGradient id="geArea" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#4aa3ff" stop-opacity=".28"/>
+        <stop offset="1" stop-color="#4aa3ff" stop-opacity="0"/>
+      </linearGradient>
+      <linearGradient id="geCone" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#7cc4ff" stop-opacity=".16"/>
+        <stop offset="1" stop-color="#7cc4ff" stop-opacity=".02"/>
+      </linearGradient>
+      <radialGradient id="geDot" cx="50%" cy="50%" r="50%">
+        <stop offset="0" stop-color="#bfe0ff"/><stop offset="1" stop-color="#4aa3ff" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <g stroke="#78a8ff" stroke-opacity=".06">
+      <path d="M0 150H1440M0 300H1440M0 450H1440M0 600H1440M0 750H1440"/>
+      <path d="M160 0V900M360 0V900M560 0V900M760 0V900M960 0V900M1160 0V900M1360 0V900"/>
+    </g>
+    <g stroke="#8fbfff" stroke-opacity=".14" fill="none">
+      <circle cx="1180" cy="250" r="120"/><circle cx="1180" cy="250" r="210"/><circle cx="1180" cy="250" r="300"/>
+    </g>
+    <!-- forecast cone -->
+    <path d="M900 470 L1000 430 1140 400 1300 355 1440 320 1440 470 1300 505 1140 540 1000 520 900 470 Z" fill="url(#geCone)"/>
+    <!-- area under historical -->
+    <path d="M60 640 L180 610 300 650 420 560 540 580 660 500 780 520 900 470 900 900 60 900 Z" fill="url(#geArea)"/>
+    <!-- historical trend -->
+    <polyline points="60,640 180,610 300,650 420,560 540,580 660,500 780,520 900,470" fill="none" stroke="#6fb0ff" stroke-opacity=".55" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <!-- prediction (dashed) -->
+    <polyline points="900,470 1010,440 1140,400 1300,350 1440,318" fill="none" stroke="#9ad0ff" stroke-opacity=".5" stroke-width="2.5" stroke-dasharray="8 7" stroke-linecap="round"/>
+    <circle cx="900" cy="470" r="5" fill="#bfe0ff" fill-opacity=".7"/>
+    <circle cx="1300" cy="350" r="26" fill="url(#geDot)"/>
+    <circle cx="1300" cy="350" r="4.5" fill="#dff0ff" fill-opacity=".9"/>
+    <!-- scatter -->
+    <g fill="#8fc4ff" fill-opacity=".4">
+      <circle cx="230" cy="430" r="3"/><circle cx="330" cy="380" r="2.4"/><circle cx="470" cy="470" r="3.4"/>
+      <circle cx="610" cy="360" r="2.6"/><circle cx="700" cy="420" r="3"/><circle cx="150" cy="520" r="2.4"/>
+      <circle cx="520" cy="300" r="2.6"/><circle cx="820" cy="360" r="3"/><circle cx="390" cy="250" r="2.2"/>
+    </g>
+    <!-- mini bars -->
+    <g fill="#5f9fe6" fill-opacity=".22">
+      <rect x="70" y="760" width="16" height="90" rx="2"/><rect x="96" y="720" width="16" height="130" rx="2"/>
+      <rect x="122" y="775" width="16" height="75" rx="2"/><rect x="148" y="690" width="16" height="160" rx="2"/>
+      <rect x="174" y="735" width="16" height="115" rx="2"/><rect x="200" y="700" width="16" height="150" rx="2"/>
+    </g>
+    <!-- node cluster -->
+    <g stroke="#8fc4ff" stroke-opacity=".22" fill="none">
+      <path d="M1090 120 L1200 80 M1200 80 L1300 150 M1200 80 L1230 200 M1090 120 L1230 200"/>
+    </g>
+    <g fill="#9ad0ff" fill-opacity=".5">
+      <circle cx="1090" cy="120" r="4"/><circle cx="1200" cy="80" r="5.5"/><circle cx="1300" cy="150" r="4"/><circle cx="1230" cy="200" r="4.5"/>
+    </g>
+  </svg>
+  <div class="ge-gate-glow"></div>
+  <div class="ge-gate-card">
+    <div class="ge-gate-badge">
+      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="10" rx="2.2"></rect><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"></path><circle cx="12" cy="15.3" r="1.4" fill="currentColor" stroke="none"></circle></svg>
+    </div>
+    <div class="ge-gate-kick">ACCESO RESTRINGIDO</div>
+    <h1 class="ge-gate-title">Visor Ejecutivo</h1>
+    <div class="ge-gate-sub">Garantías Extendidas · Grupo Walmart</div>
+    <form id="ge-gate-form" autocomplete="off">
+      <div class="ge-gate-field">
+        <input id="ge-gate-pass" type="password" inputmode="text" placeholder="Clave de acceso" aria-label="Clave de acceso" autocomplete="off" spellcheck="false">
+        <button type="button" id="ge-gate-eye" tabindex="-1" aria-label="Mostrar u ocultar clave">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+        </button>
+      </div>
+      <button type="submit" id="ge-gate-btn"><span>ENTRAR</span><span class="ge-gate-arrow">→</span></button>
+      <div id="ge-gate-msg" class="ge-gate-msg"></div>
+    </form>
+    <div class="ge-gate-foot">Uso interno · La información aquí mostrada es confidencial</div>
+  </div>
+</div>
+<style>
+#ge-gate{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(1200px 700px at 50% -10%,#12233f 0%,#0a1018 55%,#05070c 100%);
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden;opacity:1;transition:opacity .6s ease}
+#ge-gate.ge-hide{opacity:0;pointer-events:none}
+#ge-gate-bg{position:absolute;inset:0;width:100%;height:100%;opacity:.9;pointer-events:none}
+.ge-gate-glow{position:absolute;top:-30%;left:50%;transform:translateX(-50%);width:900px;height:900px;
+  background:radial-gradient(circle,rgba(41,168,255,.16),transparent 60%);filter:blur(20px);pointer-events:none}
+.ge-gate-card{position:relative;width:min(92vw,410px);padding:40px 36px 26px;border-radius:22px;
+  background:linear-gradient(160deg,rgba(23,34,54,.85),rgba(11,17,26,.92));
+  border:1px solid rgba(90,160,255,.22);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.03) inset,0 0 60px -30px rgba(41,168,255,.5);
+  text-align:center;animation:ge-rise .7s cubic-bezier(.2,.8,.2,1) both}
+@keyframes ge-rise{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}
+.ge-gate-badge{width:64px;height:64px;margin:0 auto 18px;border-radius:16px;display:grid;place-items:center;
+  color:#7cc4ff;background:linear-gradient(160deg,rgba(41,168,255,.18),rgba(41,168,255,.04));
+  border:1px solid rgba(124,196,255,.35);box-shadow:0 0 30px -6px rgba(41,168,255,.5)}
+.ge-gate-badge svg{filter:drop-shadow(0 0 6px rgba(124,196,255,.6))}
+.ge-gate-kick{font-size:11px;font-weight:700;letter-spacing:.32em;color:#5fa8e6;margin-bottom:10px}
+.ge-gate-title{margin:0;font-size:27px;font-weight:750;letter-spacing:-.01em;color:#eaf3ff;
+  text-shadow:0 0 24px rgba(124,196,255,.25)}
+.ge-gate-sub{margin-top:6px;font-size:12.5px;color:#8aa0bd;letter-spacing:.02em}
+#ge-gate-form{margin-top:26px}
+.ge-gate-field{position:relative;display:flex;align-items:center}
+#ge-gate-pass{width:100%;padding:14px 44px 14px 16px;border-radius:12px;font-size:15px;color:#eaf3ff;
+  background:rgba(6,12,22,.75);border:1px solid rgba(120,160,210,.28);outline:none;letter-spacing:.06em;
+  transition:border-color .2s,box-shadow .2s;font-family:inherit}
+#ge-gate-pass::placeholder{color:#61748f;letter-spacing:.02em}
+#ge-gate-pass:focus{border-color:rgba(41,168,255,.7);box-shadow:0 0 0 3px rgba(41,168,255,.16),0 0 24px -8px rgba(41,168,255,.6)}
+#ge-gate-eye{position:absolute;right:8px;width:32px;height:32px;border:0;background:transparent;color:#6c86a6;
+  cursor:pointer;border-radius:8px;display:grid;place-items:center}
+#ge-gate-eye:hover{color:#9cc0e6}
+#ge-gate-btn{margin-top:14px;width:100%;padding:13px 16px;border:0;border-radius:12px;cursor:pointer;
+  font-family:inherit;font-size:14px;font-weight:700;letter-spacing:.14em;color:#04101f;
+  background:linear-gradient(120deg,#4fb6ff,#2a86e6);display:flex;align-items:center;justify-content:center;gap:10px;
+  box-shadow:0 10px 30px -10px rgba(41,134,230,.8),0 0 0 1px rgba(255,255,255,.15) inset;transition:transform .12s,box-shadow .2s,filter .2s}
+#ge-gate-btn:hover{filter:brightness(1.08);box-shadow:0 14px 40px -12px rgba(41,168,255,.9)}
+#ge-gate-btn:active{transform:translateY(1px)}
+.ge-gate-arrow{transition:transform .2s}
+#ge-gate-btn:hover .ge-gate-arrow{transform:translateX(4px)}
+.ge-gate-msg{min-height:18px;margin-top:14px;font-size:12.5px;font-weight:600;letter-spacing:.01em;color:#ff6b7d;opacity:0;transition:opacity .2s}
+.ge-gate-msg.show{opacity:1}
+.ge-gate-msg.ok{color:#4fe0a0}
+.ge-gate-foot{margin-top:22px;padding-top:16px;border-top:1px solid rgba(120,160,210,.14);font-size:10.5px;color:#5c718c;letter-spacing:.02em}
+.ge-shake{animation:ge-shake .4s}
+@keyframes ge-shake{10%,90%{transform:translateX(-2px)}30%,70%{transform:translateX(5px)}50%{transform:translateX(-7px)}}
+@media(max-width:480px){.ge-gate-card{padding:32px 24px 22px}.ge-gate-title{font-size:23px}}
+</style>

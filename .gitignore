@@ -1,0 +1,4 @@
+inputs/
+.work/
+engine/__pycache__/
+*.pyc

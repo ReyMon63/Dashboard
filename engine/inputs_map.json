@@ -1,0 +1,15 @@
+{
+  "_nota": "IDs estables de Google Drive. Si el usuario re-sube un archivo (borrar+subir), el ID cambia: entonces re-resolver por (title, parent).",
+  "folders": {
+    "Visor Ejecutivo": "1Ll8n81pc8-p_pMWV-Ire2TeCLs38Lsgo",
+    "Avance Ventas Bot": "1HDnP43cnizYNpqQcdsVQXCvnUeMIBdFh"
+  },
+  "files": [
+    {"engine_name": "Historico_WM.xlsx", "title": "Histórico WM (con estrellas).xlsx", "folder": "Visor Ejecutivo",   "id": "1GXMDWPNcYjzqPyfnUiVAA3-4xGePocv6"},
+    {"engine_name": "Historico_BA.xlsx", "title": "Histórico BA (con estrellas).xlsx", "folder": "Visor Ejecutivo",   "id": "13_kK_GRPKcufnjAQKUHvRH5lEWfa5vpM"},
+    {"engine_name": "Historico_SC.xlsx", "title": "Histórico SC (con estrellas).xlsx", "folder": "Visor Ejecutivo",   "id": "1PV2kxUThRLorn8MlNJwRroXbKfusBBb1"},
+    {"engine_name": "Avance_Ventas.xlsx","title": "Avance de Ventas.xlsx",             "folder": "Avance Ventas Bot", "id": "1WWTdmMMRq_mPXl6-xd32ZF5P3-GVFrrY"},
+    {"engine_name": "Parametros.xlsx",   "title": "Parámetros Base.xlsx",              "folder": "Visor Ejecutivo",   "id": "1WwnkGo39Wz06iQ_pksfg0H53phriyFq6"},
+    {"engine_name": "Segmentacion.xlsx", "title": "Segmentación.xlsx",                 "folder": "Avance Ventas Bot", "id": "1ATT-lme6ZGn7IA0R1GQaYASBgDZUEu4h"}
+  ]
+}

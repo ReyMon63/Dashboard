@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visor Ejecutivo · Garantías Extendidas · Grupo Walmart</title>
+<script>__CHARTJS__</script>
+<script>__SHEETJS__</script>
+<style>
+:root{
+  --surface-1:#fcfcfb; --plane:#f4f4f1; --card:#ffffff;
+  --text-primary:#0b0b0b; --text-secondary:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+  --wm:#2a78d6; --ba:#eb6834; --sc:#1baf7a; --cons:#52514e;
+  --good:#0ca30c; --bad:#d03b3b; --good-ink:#006300;
+  --warning:#fab219; --serious:#ec835a;
+  --chip:#f0efec;
+}
+:root[data-theme="dark"]{
+  --surface-1:#1a1a19; --plane:#0d0d0d; --card:#1f1f1e;
+  --text-primary:#ffffff; --text-secondary:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+  --wm:#3987e5; --ba:#d95926; --sc:#199e70; --cons:#c3c2b7;
+  --good:#0ca30c; --bad:#e34948; --good-ink:#0ca30c;
+  --warning:#fab219; --serious:#ec835a;
+  --chip:#262624;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--plane);color:var(--text-primary);
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:14px;line-height:1.45}
+.wrap{max-width:1320px;margin:0 auto;padding:20px 22px 60px}
+header.top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+h1{font-size:20px;margin:0;font-weight:700;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:12.5px;margin-top:3px}
+.tag{display:inline-block;font-size:11px;color:var(--text-secondary);background:var(--chip);
+  border:1px solid var(--border);padding:2px 8px;border-radius:20px;margin-left:6px}
+/* controls */
+.controls{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;background:var(--card);
+  border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin:14px 0 18px}
+.ctl{display:flex;flex-direction:column;gap:5px}
+.ctl label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+.seg{display:flex;border:1px solid var(--border);border-radius:9px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--text-secondary);padding:7px 12px;font-size:13px;
+  cursor:pointer;font-family:inherit;font-weight:500}
+.seg button.active{background:var(--text-primary);color:var(--surface-1)}
+.seg.sm button{padding:6px 10px;font-size:12px}
+select,input[type=text]{font-family:inherit;font-size:13px;padding:7px 10px;border-radius:8px;
+  border:1px solid var(--border);background:var(--card);color:var(--text-primary);min-width:120px}
+.spacer{flex:1}
+.iconbtn{border:1px solid var(--border);background:var(--card);color:var(--text-secondary);
+  border-radius:8px;padding:7px 11px;cursor:pointer;font-size:13px;font-family:inherit}
+/* kpi grid */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 14px 12px;
+  display:flex;flex-direction:column;gap:2px;min-height:118px}
+.kpi.hero{background:linear-gradient(160deg,var(--card),var(--card))}
+.kpi .k-label{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.kpi .k-val{font-size:25px;font-weight:700;letter-spacing:-.02em;margin-top:4px}
+.kpi.hero .k-val{font-size:30px}
+.kpi .k-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.deltas{display:flex;gap:12px;margin-top:auto;padding-top:8px;flex-wrap:wrap}
+.delta{display:flex;flex-direction:column;line-height:1.2}
+.delta .dl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.delta .dv{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+.up{color:var(--good-ink)} .down{color:var(--bad)}
+.hero-mark{width:26px;height:3px;background:var(--wm);border-radius:2px;margin-bottom:2px}
+/* layout cards */
+.grid2{display:grid;grid-template-columns:1.55fr 1fr;gap:16px;margin-bottom:16px}
+.grid2b{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px 16px}
+.panel h2{font-size:14px;margin:0 0 2px;font-weight:700}
+.panel .ph{color:var(--muted);font-size:12px;margin-bottom:12px}
+.panel .phrow{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.chartbox{position:relative;height:300px}
+.chartbox.sm{height:250px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--text-secondary)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--grid);font-variant-numeric:tabular-nums}
+th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.02em;cursor:pointer;white-space:nowrap}
+td.l,th.l{text-align:left}
+tr:hover td{background:var(--chip)}
+.fbadge{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.rank{color:var(--muted);width:24px}
+.opp{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+.oppc{border:1px solid var(--border);border-radius:10px;padding:12px}
+.oppc .ov{font-size:22px;font-weight:700;letter-spacing:-.01em}
+.oppc .olb{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px}
+.oppc .od{font-size:11.5px;color:var(--text-secondary);margin-top:4px}
+.searchrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.result{display:none}
+.result.on{display:block}
+.storekpis{display:flex;gap:22px;flex-wrap:wrap;margin:10px 0 4px}
+.storekpis .sk{display:flex;flex-direction:column}
+.storekpis .sk .v{font-size:18px;font-weight:700}
+.storekpis .sk .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.hint{color:var(--muted);font-size:12px}
+.exec-headline{font-size:15.5px;line-height:1.55;color:var(--text-primary);margin:6px 0 16px;font-weight:500}
+.exec-headline strong{font-weight:700}
+.exec-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.exec-card{border:1px solid var(--border);border-radius:11px;padding:13px 14px;background:var(--surface-1);position:relative}
+.exec-card.glob{background:linear-gradient(160deg,var(--chip),var(--surface-1))}
+.exec-card .ec-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
+.exec-card .ec-name{font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:7px}
+.chip{font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;border:1.5px solid transparent}
+.chip::before{content:'';width:8px;height:8px;border-radius:50%;background:currentColor}
+.chip.t5{color:#0a6b0a;background:#d8f0d8;border-color:#7cc47c}
+.chip.t4{color:#4a7a1f;background:#e6f2d2;border-color:#a3cf6a}
+.chip.t3{color:#8a5d00;background:#fbe6c0;border-color:#e6bf5a}
+.chip.t2{color:#a8501a;background:#fbdcc4;border-color:#e89a5a}
+.chip.t1{color:#a82f2f;background:#f6cccc;border-color:#dd6b6b}
+.chip.na{color:var(--muted);background:var(--chip);border-color:var(--border)}
+:root[data-theme="dark"] .chip.t5{color:#5fd05f}:root[data-theme="dark"] .chip.t4{color:#a3d16a}
+:root[data-theme="dark"] .chip.t3{color:#f0c24a}:root[data-theme="dark"] .chip.t2{color:#f0a060}:root[data-theme="dark"] .chip.t1{color:#ec7a7a}
+.exec-card .ec-facts{display:flex;flex-direction:column;gap:5px;margin-bottom:9px}
+.exec-card .ec-fact{display:flex;justify-content:space-between;font-size:12px;gap:8px}
+.exec-card .ec-fact .fl{color:var(--muted)}
+.exec-card .ec-fact .fv{font-weight:700;font-variant-numeric:tabular-nums}
+.exec-card .ec-verdict{font-size:12px;color:var(--text-secondary);line-height:1.45;border-top:1px solid var(--grid);padding-top:8px}
+@media(max-width:1080px){.exec-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.exec-grid{grid-template-columns:1fr}}
+.foot{color:var(--muted);font-size:11.5px;margin-top:24px;line-height:1.6;border-top:1px solid var(--grid);padding-top:14px}
+datalist{color:#000}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2,.grid2b{grid-template-columns:1fr}.clsgrid{grid-template-columns:1fr!important}}
+@media(max-width:640px){.kpis{grid-template-columns:repeat(2,1fr)}}
+/* diagnóstico único */
+.exec-status{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+/* clasificación 2x3 */
+.clsgrid{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(3,auto);grid-auto-flow:column;gap:10px}
+.clscell{border:1px solid var(--border);border-radius:11px;padding:12px 14px;display:flex;align-items:center;gap:14px;background:var(--surface-1)}
+.clscell .cs-stars{font-size:17px;letter-spacing:1px;white-space:nowrap}
+.clscell .cs-mid{flex:1;min-width:0}
+.clscell .cs-count{font-size:20px;font-weight:700;line-height:1.1}
+.clscell .cs-lbl{font-size:11px;color:var(--muted)}
+.clscell .cs-move{font-size:11.5px;text-align:right;white-space:nowrap;line-height:1.5}
+.collapsible{display:none}
+.collapsible.open{display:block}
+.toggle-list{border:1px solid var(--border);background:var(--card);color:var(--text-secondary);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:12.5px;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Visor Ejecutivo · Garantías Extendidas</h1>
+      <div class="sub">Grupo Walmart · Walmart · Bodega Aurrerá · Sam's Club <span class="tag" id="tagRange"></span><span class="tag" id="tagStores"></span></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="iconbtn" id="themeBtn">◐ Tema</button>
+      <button class="iconbtn" id="logoutBtn" title="Cerrar sesión y volver a la pantalla de acceso">⎋ Salir</button>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="ctl">
+      <label>Formato</label>
+      <div class="seg" id="segFormato">
+        <button data-v="ALL" class="active">Consolidado</button>
+        <button data-v="WM">Walmart</button>
+        <button data-v="BA">Bodega A.</button>
+        <button data-v="SC">Sam's</button>
+      </div>
+    </div>
+    <div class="ctl">
+      <label>Mes de cierre</label>
+      <select id="selMonth"></select>
+    </div>
+    <div class="ctl">
+      <label>Base</label>
+      <div class="seg sm" id="segBase">
+        <button data-v="MES" class="active">Mes</button>
+        <button data-v="YTD">Acum. año (YTD)</button>
+      </div>
+    </div>
+    <div class="ctl" id="ctlDistrito" style="display:none">
+      <label>Distrito</label>
+      <select id="selDistrito"></select>
+    </div>
+    <div class="ctl" id="ctlTerritorial" style="display:none">
+      <label>Territorial</label>
+      <select id="selTerritorial"></select>
+    </div>
+    <div class="spacer"></div>
+  </div>
+
+  <div id="projBanner" style="display:none;margin:0 0 16px;padding:11px 16px;border-radius:11px;
+    background:linear-gradient(160deg,rgba(250,178,25,.16),rgba(250,178,25,.06));border:1px solid rgba(250,178,25,.45);
+    color:var(--text-primary);font-size:13px;font-weight:600;display:none;align-items:center;gap:10px">
+    <span style="font-size:16px">⚠️</span><span id="projBannerTxt"></span>
+  </div>
+
+  <div class="panel exec" id="execPanel" style="margin-bottom:18px">
+    <div class="phrow"><div class="exec-status"><h2 style="margin:0">Diagnóstico ejecutivo</h2><span class="chip" id="execChip"></span></div></div>
+    <div class="ph" id="execPh" style="margin-top:2px"></div>
+    <div class="exec-headline" id="execHeadline" style="margin-bottom:0"></div>
+    <div id="execRoster" title="Una baja se confirma tras 3 meses sin actividad; un alta, al primer mes con actividad." style="margin-top:12px;font-size:12.5px;color:var(--text-secondary);line-height:1.5"></div>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="grid2">
+    <div class="panel">
+      <div class="phrow">
+        <div><h2>Tendencia mensual</h2><div class="ph" id="trendPh"></div></div>
+        <div class="seg sm" id="segMetric">
+          <button data-v="monto" class="active">Monto $</button>
+          <button data-v="cant">Piezas</button>
+          <button data-v="conv">Conversión</button>
+          <button data-v="alc">Alcance</button>
+          <button data-v="ticket">Ticket</button>
+        </div>
+      </div>
+      <div class="chartbox"><canvas id="chTrend"></canvas></div>
+      <div class="legend" id="trendLegend"></div>
+    </div>
+    <div class="panel">
+      <h2>Venta por formato</h2>
+      <div class="ph" id="piePh"></div>
+      <div class="chartbox sm"><canvas id="chPie"></canvas></div>
+      <div class="legend" id="pieLegend"></div>
+    </div>
+  </div>
+
+  <div class="grid2b">
+    <div class="panel">
+      <div class="phrow">
+        <div><h2>Crecimiento vs. año previo</h2><div class="ph">Mismo mes en 2024 · 2025 · 2026</div></div>
+        <div class="seg sm" id="segYoY">
+          <button data-v="monto" class="active">Monto $</button>
+          <button data-v="cant">Piezas</button>
+          <button data-v="conv">Conversión</button>
+        </div>
+      </div>
+      <div class="chartbox sm"><canvas id="chYoY"></canvas></div>
+    </div>
+    <div class="panel">
+      <h2>Oportunidad de conversión</h2>
+      <div class="ph" id="oppPh"></div>
+      <div class="opp" id="oppBox"></div>
+      <div class="ph" style="margin-top:12px">Concentración (Pareto)</div>
+      <div id="pareto" class="hint"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:16px">
+    <div class="phrow"><div><h2>Clasificación por estrellas · madurez de tienda</h2><div class="ph" id="starPh"></div></div>
+      <button class="toggle-list" id="dlMovers" title="Descargar tiendas con cambio de nivel, con todos sus datos y territorial">⬇︎ Movimientos</button></div>
+    <div class="clsgrid" id="clsGrid" style="margin-top:8px"></div>
+  </div>
+
+  <div class="panel" style="margin-bottom:16px">
+    <div class="phrow"><div><h2>Calidad del presupuesto · diagnóstico de metas</h2><div class="ph" id="budPh"></div></div></div>
+    <div class="grid2b" style="margin:6px 0 0">
+      <div class="chartbox sm"><canvas id="chBud"></canvas></div>
+      <div class="opp" id="budStats" style="align-content:start"></div>
+    </div>
+    <div class="ph" id="budNote" style="margin-top:12px;line-height:1.6"></div>
+  </div>
+
+  <div class="panel" style="margin-bottom:16px">
+    <div class="phrow">
+      <div><h2>Presupuesto sugerido · Histórico Suavizado</h2>
+      <div class="ph" id="sugSubtitle"></div></div>
+    </div>
+    <div class="opp" id="sugSummary" style="grid-template-columns:repeat(3,1fr);margin-top:4px"></div>
+    <div id="sugPay" style="margin-top:12px"></div>
+    <div class="ph" id="sugMethod" style="margin:12px 0;line-height:1.65"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
+      <span class="hint" style="font-weight:600">Descargar Excel:</span>
+      <button class="iconbtn xls" data-x="WM">⬇︎ Walmart</button>
+      <button class="iconbtn xls" data-x="BA">⬇︎ Bodega Aurrerá</button>
+      <button class="iconbtn xls" data-x="SC">⬇︎ Sam's Club</button>
+      <button class="iconbtn xls" data-x="ALL" style="font-weight:600">⬇︎ Los 3 formatos</button>
+      <span class="hint" id="sugStatus"></span>
+    </div>
+    <div style="margin-bottom:8px"><button class="toggle-list" id="tglSug">▸ Ver detalle por tienda</button></div>
+    <div class="collapsible" id="wrapSug">
+      <div class="ph" id="sugPreviewPh"></div>
+      <div style="overflow-x:auto"><table id="sugTable"></table></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:16px">
+    <div class="phrow">
+      <div><h2>Ranking de tiendas</h2><div class="ph" id="rankPh"></div></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <div class="seg sm" id="segRankDir">
+          <button data-v="top" class="active">Top</button>
+          <button data-v="bottom">Bottom</button>
+        </div>
+        <div class="seg sm" id="segRankMetric">
+          <button data-v="monto" class="active">Monto $</button>
+          <button data-v="cant">Piezas</button>
+          <button data-v="conv">Conversión</button>
+          <button data-v="alc">Alcance</button>
+        </div>
+        <button class="toggle-list" id="tglRank">▸ Ver lista</button>
+      </div>
+    </div>
+    <div class="collapsible" id="wrapRank" style="margin-top:10px"><div style="overflow-x:auto"><table id="rankTable"></table></div></div>
+  </div>
+
+  <div class="panel">
+    <h2>Buscador de tienda</h2>
+    <div class="ph">Escribe nombre o clave para ver su historia y desempeño</div>
+    <div class="searchrow">
+      <input type="text" id="storeInput" list="storeList" placeholder="Ej. Tecate Garita, 5295, Toluca…" style="min-width:280px">
+      <datalist id="storeList"></datalist>
+      <button class="iconbtn" id="storeGo">Ver</button>
+      <span class="hint" id="storeHint"></span>
+    </div>
+    <div class="result" id="storeResult">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">
+        <div><strong id="storeName" style="font-size:15px"></strong><div class="hint" id="storeMeta"></div><div id="storeCrit"></div><div id="storeProx" style="margin-top:6px"></div></div>
+      </div>
+      <div class="storekpis" id="storeKpis"></div>
+      <div class="chartbox sm" style="height:220px"><canvas id="chStore"></canvas></div>
+    </div>
+  </div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+const DB = __DATA__;
+</script>
+<script>
+/* ============ helpers ============ */
+const F=['WM','BA','SC'], FCOL={WM:'--wm',BA:'--ba',SC:'--sc',ALL:'--cons'};
+const FNAME=DB.meta.formatos, MONTHS=DB.meta.months, NM=MONTHS.length;
+const MES_ES={'01':'Ene','02':'Feb','03':'Mar','04':'Abr','05':'May','06':'Jun','07':'Jul','08':'Ago','09':'Sep','10':'Oct','11':'Nov','12':'Dic'};
+function mlabel(mi){const[y,m]=MONTHS[mi].split('-');return MES_ES[m]+' '+y.slice(2);}
+function yearOf(mi){return +MONTHS[mi].split('-')[0];}
+function monOf(mi){return MONTHS[mi].split('-')[1];}
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+const state={formato:'ALL',mi:NM-1,base:'MES',metric:'monto',yoy:'monto',rankDir:'top',rankMetric:'monto',budMethod:'v2',distrito:'ALL',territorial:'ALL'};
+const SEG=DB.seg||{};
+const PROJ=(DB.meta&&DB.meta.projected)||null;
+function isProjected(mi){return PROJ&&mi===PROJ.mi;}
+function updProjBanner(){
+  const b=document.getElementById('projBanner');if(!b)return;
+  if(isProjected(state.mi)){
+    b.style.display='flex';
+    document.getElementById('projBannerTxt').innerHTML=
+      `<strong>Mes en curso (${mlabel(state.mi)}) · datos proyectados linealmente al cierre.</strong> `+
+      `Corte a día ${PROJ.asof_day} de ${PROJ.days_in_month} (factor ×${PROJ.factor}). `+
+      `Ojo en Mayo/Noviembre: la proyección lineal no refleja la concentración de HotSale/Buen Fin.`;
+  } else { b.style.display='none'; }
+}
+function segOf(si){return SEG[String(si)]||{d:'',t:''};}
+function segPass(si){const g=segOf(si);return (state.distrito==='ALL'||g.d===state.distrito)&&(state.territorial==='ALL'||g.t===state.territorial);}
+function segFilt(rows,keyFn){return rows.filter(r=>segPass(keyFn?keyFn(r):r.si));}
+
+/* índice de recs por mes, para agregar respetando el filtro de segmento */
+const recsByMonth={};
+for(const _r of DB.recs){(recsByMonth[_r[1]]||(recsByMonth[_r[1]]=[])).push(_r);}
+function segActive(){return state.distrito!=='ALL'||state.territorial!=='ALL';}
+/* aggregate [monto,cant,meta,eleg,ntiendas] for a format+month, or ALL=sum.
+   Con filtro de Distrito/Territorial activo se recalcula desde las tiendas del segmento. */
+function aggAt(f,mi){
+  if(!segActive()){
+    if(f==='ALL'){let a=[0,0,0,0,0];F.forEach(x=>{const d=DB.agg[x][mi];for(let i=0;i<5;i++)a[i]+=d[i];});return a;}
+    return DB.agg[f][mi].slice();
+  }
+  let a=[0,0,0,0,0];const rs=recsByMonth[mi]||[];
+  for(const r of rs){const s=DB.stores[r[0]];if(f!=='ALL'&&s.f!==f)continue;if(!segPass(r[0]))continue;
+    a[0]+=r[2];a[1]+=r[3];a[2]+=r[4];a[3]+=r[5];if(r[3]>0)a[4]++;}
+  return a;
+}
+/* YTD sum from January of that month's year up to mi (inclusive) */
+function ytdRange(mi){const y=yearOf(mi);let s=mi;while(s>0&&yearOf(s-1)===y)s--;return[s,mi];}
+function aggYTD(f,mi){const[s,e]=ytdRange(mi);let a=[0,0,0,0,0];for(let i=s;i<=e;i++){const d=aggAt(f,i);for(let j=0;j<4;j++)a[j]+=d[j];a[4]=Math.max(a[4],d[4]);}return a;}
+function priorYearIdx(mi){const t=mi-12;return t>=0?t:null;}
+function metricsFrom(a){const[m,c,mt,e]=a;return{monto:m,cant:c,conv:e?c/e:0,alc:mt?c/mt:0,ticket:c?m/c:0,eleg:e,meta:mt};}
+
+/* formatting */
+function fMoney(v){if(Math.abs(v)>=1e6)return'$'+(v/1e6).toFixed(v>=1e7?1:2)+'M';if(Math.abs(v)>=1e3)return'$'+(v/1e3).toFixed(0)+'k';return'$'+Math.round(v);}
+function fMoneyFull(v){return'$'+Math.round(v).toLocaleString('es-MX');}
+function fInt(v){return Math.round(v).toLocaleString('es-MX');}
+function fPct(v){return(v*100).toFixed(1)+'%';}
+function fNum(v){return v.toFixed(2);}
+function pct(a,b){return b?((a-b)/Math.abs(b)):null;}
+function deltaHTML(cur,prev,isPct,invert){ if(prev===null||prev===undefined){return'<span class="dv">—</span>';}
+  if(isPct){const d=(cur-prev)*100; const cl=(d>=0)!==!!invert?'up':'down'; return`<span class="dv ${cl}">${d>=0?'+':''}${d.toFixed(1)} pp</span>`;}
+  const r=pct(cur,prev); if(r===null)return'<span class="dv">—</span>';
+  const cl=(r>=0)!==!!invert?'up':'down'; return`<span class="dv ${cl}">${r>=0?'+':''}${(r*100).toFixed(1)}%</span>`;}
+
+/* recs cache: filter by month (+format) */
+const storeByIdx=DB.stores; // {i,f,clave,n}
+function recsAt(mi,f){const out=[];for(const r of DB.recs){if(r[1]!==mi)continue;if(f!=='ALL'&&storeByIdx[r[0]].f!==f)continue;if(!segPass(r[0]))continue;out.push(r);}return out;}
+
+/* ============ diagnóstico ejecutivo ============ */
+function diagFor(f,mi){
+  const pmi=priorYearIdx(mi);
+  const cM=metricsFrom(aggAt(f,mi));
+  const pM=pmi!==null?metricsFrom(aggAt(f,pmi)):null;
+  const cY=metricsFrom(aggYTD(f,mi));
+  const pY=pmi!==null?metricsFrom(aggYTD(f,pmi)):null;
+  const montoYoYmes=pM?pct(cM.monto,pM.monto):null;
+  const montoYoYytd=pY?pct(cY.monto,pY.monto):null;
+  const dppYTD=pY?(cY.conv-pY.conv)*100:null;
+  const dppMes=pM?(cM.conv-pM.conv)*100:null;
+  // score
+  let sc=0;const g=montoYoYytd;
+  if(g!==null){sc+= g>=0.05?2 : g>=0?1 : g>=-0.05?-1 : -2;}
+  if(dppYTD!==null){sc+= dppYTD>=0.3?1 : dppYTD>=-0.3?0 : dppYTD>=-1.5?-1 : -2;}
+  if(montoYoYmes!==null){sc+= montoYoYmes>0.15?1 : montoYoYmes<-0.05?-1 : 0;}
+  let st;
+  if(pmi===null) st={k:'na',t:'Sin base comparable'};
+  else if(sc>=3) st={k:'t5',t:'En crecimiento'};
+  else if(sc>=2) st={k:'t4',t:'Sólido'};
+  else if(sc>=0) st={k:'t3',t:'Estable'};
+  else if(sc>=-3) st={k:'t2',t:'Atención'};
+  else st={k:'t1',t:'En riesgo'};
+  return {cM,cY,montoYoYmes,montoYoYytd,dppYTD,dppMes,st,sc,hasBase:pmi!==null};
+}
+function dtxt(v,isPct){if(v===null)return'—';if(isPct)return(v>=0?'+':'')+v.toFixed(1)+' pp';return(v>=0?'+':'')+(v*100).toFixed(1)+'%';}
+function dcls(v,inv){if(v===null)return'';return (v>=0)!==!!inv?'up':'down';}
+/* padrón de tiendas: activa = con registro en la ventana [mi-2, mi] (3 meses).
+   alta = aparece en la ventana actual y no en la previa; baja = al revés (3 meses sin actividad). */
+function rosterActive(mi,f){
+  const s=new Set();
+  for(let m=Math.max(0,mi-2);m<=mi;m++){(recsByMonth[m]||[]).forEach(r=>{
+    const st=DB.stores[r[0]];if(f&&f!=='ALL'&&st.f!==f)return;if(!segPass(r[0]))return;s.add(r[0]);});}
+  return s;
+}
+function rosterMoves(mi,f){
+  if(mi<1)return null;
+  const cur=rosterActive(mi,f), prev=rosterActive(mi-1,f);
+  const entered=[],left=[];
+  cur.forEach(si=>{if(!prev.has(si))entered.push(si);});
+  prev.forEach(si=>{if(!cur.has(si))left.push(si);});
+  return {entered,left};
+}
+function fmtBreak(list){const o={WM:0,BA:0,SC:0};list.forEach(si=>o[DB.stores[si].f]++);
+  return ['WM','BA','SC'].filter(f=>o[f]>0).map(f=>o[f]+' '+f).join(' · ');}
+function rosterNames(list){return list.slice(0,4).map(si=>{const s=DB.stores[si];return (s.n||('clave '+s.clave))+' ('+s.f+')';}).join(', ')+(list.length>4?' …':'');}
+function renderRoster(){
+  const el=document.getElementById('execRoster');if(!el)return;
+  const mv=rosterMoves(state.mi,state.formato);
+  if(!mv){el.innerHTML='';return;}
+  const nE=mv.entered.length,nL=mv.left.length,isAll=state.formato==='ALL';
+  if(nE===0&&nL===0){el.innerHTML='<span style="color:var(--muted)">🏪 Padrón de tiendas: sin altas ni bajas respecto al mes anterior.</span>';return;}
+  const parts=[];
+  if(nE>0)parts.push(`<span class="up" style="font-weight:700">▲ ${nE} ${nE===1?'alta':'altas'}</span>`+(isAll?` <span style="color:var(--muted)">(${fmtBreak(mv.entered)})</span>`:'')+(nE<=4?` — ${rosterNames(mv.entered)}`:''));
+  if(nL>0)parts.push(`<span class="down" style="font-weight:700">▼ ${nL} ${nL===1?'baja':'bajas'}</span>`+(isAll?` <span style="color:var(--muted)">(${fmtBreak(mv.left)})</span>`:'')+(nL<=4?` — ${rosterNames(mv.left)}`:''));
+  el.innerHTML='🏪 <strong>Movimiento de padrón</strong> (al cierre de '+mlabel(state.mi)+'): '+parts.join(' &nbsp; · &nbsp; ');
+}
+function renderExec(){
+  const mi=state.mi;const f=state.formato;
+  const isAll=f==='ALL';const name=isAll?'Grupo Walmart':FNAME[f];
+  const d=diagFor(f,mi);
+  document.getElementById('execPh').textContent='Situación de '+name+' al cierre de '+mlabel(mi);
+  const chip=document.getElementById('execChip');
+  chip.className='chip '+(d.st?d.st.k:'na');chip.textContent=d.st?d.st.t:'—';
+  let hl='';
+  if(!d.hasBase){
+    hl=`Cierre de <strong>${mlabel(mi)}</strong>: <strong>${fMoneyFull(d.cM.monto)}</strong> en el mes. Aún no hay 12 meses previos para comparar crecimiento anual en este corte.`;
+  }else{
+    const pen=`la penetración de GE se ubica en <strong>${fPct(d.cY.conv)}</strong> (${dtxt(d.dppYTD,true)} vs. ${yearOf(mi)-1})`;
+    const mesTxt=`cerró <strong>${mlabel(mi)}</strong> con <strong>${fMoneyFull(d.cM.monto)}</strong> (<span class="${dcls(d.montoYoYmes)}">${dtxt(d.montoYoYmes)}</span> vs. mismo mes del año pasado)`;
+    if(isAll){
+      const worst=['WM','BA','SC'].map(x=>({x,d:diagFor(x,mi)})).sort((a,b)=>a.d.sc-b.d.sc)[0];
+      const best=['WM','BA','SC'].map(x=>({x,d:diagFor(x,mi)})).sort((a,b)=>b.d.sc-a.d.sc)[0];
+      if(d.montoYoYmes>=0&&d.montoYoYytd<0)
+        hl=`El grupo ${mesTxt}, pero el <strong>acumulado del año va ${dtxt(d.montoYoYytd)}</strong> y ${pen}. Un mes fuerte no compensa un año por debajo de ${yearOf(mi)-1}: el foco de riesgo es <strong>${FNAME[worst.x]}</strong>, mientras <strong>${FNAME[best.x]}</strong> es el más sólido.`;
+      else if(d.montoYoYytd>=0)
+        hl=`El grupo acumula <strong>${fMoneyFull(d.cY.monto)}</strong> en el año (<span class="up">${dtxt(d.montoYoYytd)}</span> vs. ${yearOf(mi)-1}) y ${pen}. <strong>${FNAME[best.x]}</strong> lidera; <strong>${FNAME[worst.x]}</strong> requiere atención.`;
+      else
+        hl=`El grupo va <strong>${dtxt(d.montoYoYytd)}</strong> en el acumulado del año y ${pen}. El foco de riesgo es <strong>${FNAME[worst.x]}</strong>.`;
+    }else{
+      let cierre;
+      if(d.st.k==='t1')cierre=`Cae en ventas acumuladas y pierde penetración: <strong>requiere acción prioritaria</strong>.`;
+      else if(d.st.k==='t2')cierre=(d.montoYoYmes>0.1?`Buen mes, pero `:'')+`el año va por debajo${d.dppYTD<0?' y la penetración se erosiona':''}: <strong>vigilar de cerca</strong>.`;
+      else if(d.st.k==='t3')cierre=`Se mantiene cerca del año pasado: <strong>estable</strong>, sin crecimiento claro.`;
+      else cierre=`<strong>Crece</strong> en el año con penetración ${d.dppYTD>=0?'al alza':'sostenida'}.`;
+      hl=`${name} ${mesTxt}. El <strong>acumulado del año va ${dtxt(d.montoYoYytd)}</strong> y ${pen}. ${cierre}`;
+    }
+  }
+  document.getElementById('execHeadline').innerHTML=hl;
+  renderRoster();
+}
+/* ============ KPI render ============ */
+const fAlc=v=>(v*100).toFixed(0)+'%';
+const KDEF=[
+  {key:'monto',label:'Monto GE',hero:true,fmt:fMoneyFull,short:fMoney,pctMetric:false,sub:'Venta en pesos'},
+  {key:'cant',label:'Piezas GE',fmt:fInt,pctMetric:false,sub:'Garantías vendidas'},
+  {key:'conv',label:'Conversión',fmt:fPct,pctMetric:true,sub:'GE ÷ elegibles'},
+  {key:'eleg',label:'Elegibles',fmt:fInt,pctMetric:false,sub:'Base elegible de GE'},
+  {key:'alc',label:'Alcance plan',fmt:fAlc,pctMetric:true,sub:'GE ÷ presupuesto'},
+  {key:'ticket',label:'Ticket prom.',fmt:fMoneyFull,pctMetric:false,sub:'Monto ÷ pieza'},
+  {key:'tiendas',label:'Tiendas c/venta',fmt:fInt,pctMetric:false,sub:'con al menos 1 GE'},
+  {key:'cero',label:'Tiendas sin venta',fmt:fInt,pctMetric:false,sub:'0 GE en el mes',noYtd:true,invert:true},
+];
+function ceroCount(f,mi){return recsAt(mi,f).filter(r=>r[3]<=0).length;}
+function kpiValues(f,mi,base){const a=base==='YTD'?aggYTD(f,mi):aggAt(f,mi);const m=metricsFrom(a);m.tiendas=a[4];m.cero=ceroCount(f,mi);return m;}
+function renderKPIs(){
+  const f=state.formato,mi=state.mi,base=state.base;
+  const cur=kpiValues(f,mi,base);
+  const pmi=priorYearIdx(mi);
+  const yoyMes=pmi!==null?metricsFromExt(kpiValues(f,pmi,'MES')):null;
+  const curMes=metricsFromExt(kpiValues(f,mi,'MES'));
+  const yoyYtd=pmi!==null?metricsFromExt(kpiValues(f,pmi,'YTD')):null;
+  const curYtd=metricsFromExt(kpiValues(f,mi,'YTD'));
+  const box=document.getElementById('kpis');box.innerHTML='';
+  KDEF.forEach(k=>{
+    const val=cur[k.key];
+    const el=document.createElement('div');el.className='kpi'+(k.hero?' hero':'');
+    const isPct=k.pctMetric;
+    const yoyd=deltaHTML(curMes[k.key], yoyMes?yoyMes[k.key]:null, isPct, k.invert);
+    const ytdd=k.noYtd?'<span class="dv" style="color:var(--muted)">—</span>':deltaHTML(curYtd[k.key], yoyYtd?yoyYtd[k.key]:null, isPct, k.invert);
+    const subExtra=(k.noYtd)?'':(base==='YTD'?' · acumulado':'');
+    el.innerHTML=`${k.hero?'<div class="hero-mark"></div>':''}
+      <div class="k-label">${k.label}</div>
+      <div class="k-val">${k.fmt(val)}</div>
+      <div class="k-sub">${k.sub}${subExtra}</div>
+      <div class="deltas">
+        <div class="delta"><span class="dl">YoY mismo mes</span>${yoyd}</div>
+        <div class="delta"><span class="dl">YTD vs YTD</span>${ytdd}</div>
+      </div>`;
+    box.appendChild(el);
+  });
+}
+function metricsFromExt(m){return m;} // already computed obj incl tiendas
+
+/* ============ charts ============ */
+let chTrend,chPie,chYoY,chStore,chBud,chStars;
+const gridC=()=>css('--grid'),axisC=()=>css('--axis'),mutedC=()=>css('--muted'),textC=()=>css('--text-secondary');
+function baseOpts(){return{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+  plugins:{legend:{display:false},tooltip:{backgroundColor:css('--card'),titleColor:css('--text-primary'),bodyColor:textC(),borderColor:css('--border'),borderWidth:1,padding:10,cornerRadius:8}},
+  scales:{x:{grid:{display:false},ticks:{color:mutedC(),font:{size:11},maxRotation:0,autoSkip:true,maxTicksLimit:12}},
+          y:{grid:{color:gridC()},border:{display:false},ticks:{color:mutedC(),font:{size:11}}}}};}
+function metricSeries(f,key){const arr=[];for(let mi=0;mi<NM;mi++){const m=metricsFrom(aggAt(f,mi));arr.push(m[key==='alc'?'alc':key==='ticket'?'ticket':key==='conv'?'conv':key]);}return arr;}
+function fmtAxis(key){return key==='monto'||key==='ticket'?(v=>fMoney(v)):key==='conv'?(v=>(v*100).toFixed(0)+'%'):key==='alc'?(v=>(v*100).toFixed(0)+'%'):(v=>fInt(v));}
+function fmtVal(key){return key==='monto'||key==='ticket'?fMoneyFull:key==='conv'?fPct:key==='alc'?fAlc:fInt;}
+
+function renderTrend(){
+  const key=state.metric;const labels=MONTHS.map((_,i)=>mlabel(i));
+  const show = state.formato==='ALL'?['WM','BA','SC']:[state.formato];
+  const ds=show.map(f=>({label:FNAME[f],data:metricSeries(f,key),borderColor:css(FCOL[f]),backgroundColor:css(FCOL[f]),
+    borderWidth:2,pointRadius:0,pointHoverRadius:5,tension:.25}));
+  if(state.formato==='ALL'){ds.push({label:'Consolidado',data:metricSeries('ALL',key),borderColor:css('--cons'),
+    borderWidth:2,borderDash:[5,4],pointRadius:0,pointHoverRadius:5,tension:.25});}
+  const o=baseOpts();o.scales.y.ticks.callback=fmtAxis(key);
+  o.plugins.tooltip.callbacks={label:c=>c.dataset.label+': '+fmtVal(key)(c.parsed.y)};
+  // vertical marker for selected month
+  const selLine={id:'sel',afterDraw:ch=>{const x=ch.scales.x.getPixelForValue(state.mi);const a=ch.chartArea;
+    const ctx=ch.ctx;ctx.save();ctx.strokeStyle=css('--axis');ctx.setLineDash([3,3]);ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(x,a.top);ctx.lineTo(x,a.bottom);ctx.stroke();ctx.restore();}};
+  if(chTrend)chTrend.destroy();
+  chTrend=new Chart(document.getElementById('chTrend'),{type:'line',data:{labels,datasets:ds},options:o,plugins:[selLine]});
+  const lg=document.getElementById('trendLegend');lg.innerHTML=ds.map(d=>`<span><span class="dot" style="background:${d.borderColor}"></span>${d.label}</span>`).join('');
+  document.getElementById('trendPh').textContent=({monto:'Monto GE en pesos',cant:'Piezas de GE',conv:'Conversión (GE ÷ elegibles)',alc:'Alcance de plan (GE ÷ presupuesto)',ticket:'Ticket promedio por GE'})[key]+' · '+ (state.formato==='ALL'?'por formato':FNAME[state.formato]);
+}
+function renderPie(){
+  const mi=state.mi;const montos=F.map(f=>metricsFrom(aggAt(f,mi)).monto);
+  const total=montos.reduce((a,b)=>a+b,0)||1;
+  if(chPie)chPie.destroy();
+  chPie=new Chart(document.getElementById('chPie'),{type:'doughnut',data:{labels:F.map(f=>FNAME[f]),
+    datasets:[{data:montos,backgroundColor:F.map(f=>css(FCOL[f])),borderColor:css('--surface-1'),borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'58%',
+      plugins:{legend:{display:false},tooltip:{backgroundColor:css('--card'),titleColor:css('--text-primary'),bodyColor:textC(),borderColor:css('--border'),borderWidth:1,padding:10,cornerRadius:8,
+        callbacks:{label:c=>c.label+': '+fMoneyFull(c.parsed)+' ('+(c.parsed/total*100).toFixed(0)+'%)'}}}}});
+  document.getElementById('piePh').textContent='Participación del monto GE · '+mlabel(mi);
+  document.getElementById('pieLegend').innerHTML=F.map((f,i)=>`<span><span class="dot" style="background:${css(FCOL[f])}"></span>${FNAME[f]} ${(montos[i]/total*100).toFixed(0)}% · ${fMoney(montos[i])}</span>`).join('');
+}
+function renderYoY(){
+  const key=state.yoy;const f=state.formato;
+  const mon=monOf(state.mi);
+  const years=[2024,2025,2026];
+  const idxs=years.map(y=>MONTHS.indexOf(y+'-'+mon)).filter(i=>i>=0);
+  const labels=idxs.map(i=>mlabel(i));
+  const data=idxs.map(i=>metricsFrom(aggAt(f,i))[key]);
+  const o=baseOpts();o.scales.y.ticks.callback=fmtAxis(key);
+  o.plugins.tooltip.callbacks={label:c=>fmtVal(key)(c.parsed.y)};
+  o.plugins.legend={display:false};
+  if(chYoY)chYoY.destroy();
+  chYoY=new Chart(document.getElementById('chYoY'),{type:'bar',data:{labels,datasets:[{data:data,
+    backgroundColor:css(FCOL[f]),borderRadius:5,barPercentage:.55}]},options:o});
+}
+/* ============ opportunity + pareto ============ */
+function renderOpp(){
+  const f=state.formato,mi=state.mi;const rows=recsAt(mi,f);
+  const agg=aggAt(f,mi);const M=metricsFrom(agg);const avgConv=M.conv;const ticket=M.ticket;
+  let extraPiezas=0;
+  rows.forEach(r=>{const[si,,monto,cant,meta,eleg]=r;const c=eleg?cant/eleg:0;if(c<avgConv&&eleg>0){extraPiezas+=(avgConv-c)*eleg;}});
+  const extraMonto=extraPiezas*ticket;
+  const noConv=agg[3]-agg[1]; // elegibles - piezas
+  document.getElementById('oppPh').textContent='Si las tiendas por debajo del promedio ('+fPct(avgConv)+') alcanzaran el promedio de '+(f==='ALL'?'su grupo':FNAME[f])+' · '+mlabel(mi);
+  document.getElementById('oppBox').innerHTML=`
+    <div class="oppc"><div class="olb">Piezas potenciales</div><div class="ov">+${fInt(extraPiezas)}</div><div class="od">GE adicionales al mes cerrando la brecha a promedio</div></div>
+    <div class="oppc"><div class="olb">Monto potencial</div><div class="ov">${fMoney(extraMonto)}</div><div class="od">estimado con ticket promedio de ${fMoneyFull(ticket)}</div></div>
+    <div class="oppc"><div class="olb">Elegibles sin GE</div><div class="ov">${fInt(noConv)}</div><div class="od">base no convertida este mes</div></div>
+    <div class="oppc"><div class="olb">Conversión actual</div><div class="ov">${fPct(avgConv)}</div><div class="od">del ${f==='ALL'?'consolidado':FNAME[f]}</div></div>`;
+  // pareto
+  const arr=rows.map(r=>r[2]).filter(x=>x>0).sort((a,b)=>b-a);const total=arr.reduce((a,b)=>a+b,0);
+  function share(p){const n=Math.max(1,Math.round(arr.length*p));let s=0;for(let i=0;i<n;i++)s+=arr[i];return total?s/total:0;}
+  document.getElementById('pareto').innerHTML=`El <strong>20%</strong> de tiendas top concentra <strong>${fPct(share(.2))}</strong> del monto · el <strong>50%</strong> concentra <strong>${fPct(share(.5))}</strong> · total de ${fInt(rows.length)} tiendas.`;
+}
+/* ============ budget quality diagnostic ============ */
+function renderBudget(){
+  const f=state.formato,mi=state.mi;
+  const rows=recsAt(mi,f).filter(r=>r[4]&&r[4]>0);
+  const buckets=[0,0,0,0,0]; // <50, 50-80, 80-120(sano), 120-200, >200
+  const alcs=[];const metaCount={};
+  rows.forEach(r=>{const[,,,ca,me]=r;const a=ca/me;alcs.push(a);
+    metaCount[Math.round(me)]=(metaCount[Math.round(me)]||0)+1;
+    if(a<0.5)buckets[0]++;else if(a<0.8)buckets[1]++;else if(a<=1.2)buckets[2]++;else if(a<=2)buckets[3]++;else buckets[4]++;});
+  const N=rows.length||1;
+  const labels=['<50%','50–80%','80–120%\n(sano)','120–200%','>200%\n(irreal)'];
+  const cols=[css('--serious')||'#ec835a',css('--warning')||'#fab219',css('--good'),css('--warning')||'#fab219',css('--bad')];
+  const o=baseOpts();o.scales.y.ticks.callback=v=>v+'%';o.plugins.tooltip.callbacks={label:c=>fInt(buckets[c.dataIndex])+' tiendas · '+c.parsed.y.toFixed(0)+'%'};
+  o.scales.x.ticks.callback=function(v){return this.getLabelForValue(v).split('\n');};
+  if(chBud)chBud.destroy();
+  chBud=new Chart(document.getElementById('chBud'),{type:'bar',data:{labels,datasets:[{
+    data:buckets.map(b=>100*b/N),backgroundColor:['#ec835a','#fab219',css('--good'),'#fab219','#d03b3b'],borderRadius:4,barPercentage:.72}]},options:o});
+  const med=[...alcs].sort((a,b)=>a-b)[Math.floor(alcs.length/2)]||0;
+  const irreal=buckets[4]/N, lejos=buckets[0]/N, sano=buckets[2]/N;
+  const mc=Object.entries(metaCount).sort((a,b)=>b[1]-a[1]);
+  const top2=(mc[0]?mc[0][1]:0)+(mc[1]?mc[1][1]:0);const unif=top2/N;
+  document.getElementById('budPh').textContent='Distribución del alcance al plan por tienda · '+(f==='ALL'?'todos los formatos':FNAME[f])+' · '+mlabel(mi);
+  document.getElementById('budStats').innerHTML=`
+    <div class="oppc"><div class="olb">Alcance mediano</div><div class="ov">${fPct(med)}</div><div class="od">la mitad de las tiendas vende menos que esto vs. su meta</div></div>
+    <div class="oppc"><div class="olb">Metas irreales (>200%)</div><div class="ov" style="color:var(--bad)">${fPct(irreal)}</div><div class="od">metas rebasadas por mucho: estaban demasiado bajas</div></div>
+    <div class="oppc"><div class="olb">Muy por debajo (<50%)</div><div class="ov" style="color:#ec835a">${fPct(lejos)}</div><div class="od">metas probablemente demasiado altas o mal estacionalizadas</div></div>
+    <div class="oppc"><div class="olb">Uniformidad de meta</div><div class="ov">${fPct(unif)}</div><div class="od">de las tiendas comparten solo 2 valores de meta (${mc[0]?mc[0][0]:''}${mc[1]?' y '+mc[1][0]:''})</div></div>`;
+  document.getElementById('budNote').innerHTML=`<strong>Lectura:</strong> solo <strong>${fPct(sano)}</strong> de las tiendas cae en un rango sano (80–120% del plan). La combinación de muchas metas inalcanzables y otras rebasadas por 3–7× es la firma de un presupuesto asignado de forma <strong>casi uniforme / por piso</strong>, no construido desde el potencial e historia de cada tienda. Recomendación: reconstruir la meta por tienda a partir de sus elegibles, su conversión histórica y su curva de estacionalidad.`;
+}
+/* ============ presupuesto sugerido (v1 run-rate / v2 conversión-objetivo) ============ */
+const MES12=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const BUD=DB.budget||{}, BUD2=DB.budget2||{}, BUD3=DB.budget3, STARS=DB.stars;
+const STAR_COL=['#c3c2b7','#cde2fb','#86b6ef','#3987e5','#1c5cab','#0d366b'];
+const CRIT=['Vendió ≥12 GE (12m)','No decreció vs. año previo','Cumplió la suma de sus metas','Cumplió meta en 10 meses','≥80% de conversión objetivo'];
+function critAt(si,mi){const a=DB.stars.crit&&DB.stars.crit[String(si)];if(!a)return -1;const k=mi-STARS.start_idx;return(k>=0&&k<a.length)?a[k]:-1;}
+const PROXNAME=['Venta mínima','Crecimiento','Meta','Regularidad','Penetración'];
+function proximaJS(si,mi){
+  const f=storeByIdx[si].f;const CT=DB.budget2.params.conv_target;const hist=storeHistory(si);
+  const S3=(a,b)=>{let s=0;for(let i=a;i<=b;i++){const r=hist[i];if(r)s+=Math.max(r[3],0);}return s;};
+  let ca=0,me=0,el=0,hits=0;
+  for(let i=mi-11;i<=mi;i++){const r=hist[i];if(r){ca+=Math.max(r[3],0);me+=(r[4]||0);el+=Math.max(r[5]||0,0);if((r[4]||0)>0&&r[3]>=r[4])hits++;}}
+  if(ca===0)return null;
+  const conv=el?ca/el:0, thr=0.8*CT[f];
+  const qNow=S3(mi-2,mi), qPrev=S3(mi-14,mi-12);
+  let prevpres=false;for(let i=mi-14;i<=mi-12;i++)if(hist[i])prevpres=true;
+  const isnew=!prevpres;
+  const cands=[];
+  if(ca<12)cands.push([ca/12,0,`Vender ${Math.ceil(12-ca)} GE más en 12 meses`]);
+  if(mi>=STARS.dic25_idx&&!isnew&&qPrev>0&&qNow<qPrev)cands.push([qNow/qPrev,1,`Vender ${Math.ceil(qPrev-qNow)} GE más en el últ. trimestre vs. año previo`]);
+  if(!(me>0&&ca>=me))cands.push([me>0?ca/me:0,2,`Vender ${Math.ceil(Math.max(0,me-ca))} GE más para cumplir su meta acumulada`]);
+  if(hits<10)cands.push([hits/10,3,`Cumplir meta en ${10-hits} mes(es) más`]);
+  if(!(el>0&&conv>=thr))cands.push([thr>0?conv/thr:0,4,`Subir conversión a ${(thr*100).toFixed(1)}% (hoy ${(conv*100).toFixed(1)}%)`]);
+  if(!cands.length)return {max:true};
+  cands.sort((a,b)=>b[0]-a[0]);
+  return {name:PROXNAME[cands[0][1]],pos:cands[0][1]+1,how:cands[0][2]};
+}
+function MONTHS_lbl(ym){const[y,m]=ym.split('-');return MES_ES[m]+'-'+y.slice(2);}
+// current meta by calendar month over TTM, per store
+let curMetaByStore={};
+(function(){const TTMset=new Set();for(let i=NM-12;i<NM;i++)TTMset.add(i);
+  for(const r of DB.recs){if(!TTMset.has(r[1]))continue;const cm=+MONTHS[r[1]].split('-')[1];
+    (curMetaByStore[r[0]]=curMetaByStore[r[0]]||{})[cm]=r[4]||0;}})();
+function curMonthly(si){const m=curMetaByStore[si]||{};return MES12.map((_,i)=>m[i+1]||0);}
+// ticket por tienda (de v1: monto/piezas)
+let tickBySi={};BUD3.stores&&['WM','BA','SC'].forEach(f=>BUD3.stores[f].forEach(r=>{tickBySi[r[0]]=r[3]?r[4]/r[3]:0;}));
+// star at month index
+function starAt(si,mi){const a=STARS.levels[String(si)];if(!a)return -1;const k=mi-STARS.start_idx;return(k>=0&&k<a.length)?a[k]:-1;}
+function starStr(v){return v<0?'—':v===0?'0★':'★'.repeat(v)+'☆'.repeat(5-v);}
+// normalized budget rows (Histórico Suavizado / v3): {si,f,tier,v2025,el,pz,conv,cur,sug,m12}
+// budget3.stores[f] = [si, tier, piezas2025, elegibles12m, piezas12m, meta_actual_anual, meta_sugerida_anual, [12 meses]]
+function normBud(f){
+  const out=BUD3.stores[f].map(r=>({si:r[0],f,tier:r[1],v2025:r[2],el:r[3],pz:r[4],conv:(r[3]?r[4]/r[3]:0),cur:r[5],sug:r[6],m12:r[7]}));
+  return out.filter(r=>segPass(r.si));
+}
+function allBud(f){return f==='ALL'?['WM','BA','SC'].flatMap(normBud):normBud(f);}
+
+function renderSug(){
+  const p=BUD3.params;const gPct=(p.growth*100).toFixed(0);
+  const floorTxt=`Walmart ${p.floor.WM} · Bodega ${p.floor.BA} · Sam's ${p.floor.SC}`;
+  document.getElementById('sugSubtitle').innerHTML = `Meta = <strong>venta real 2025 × ${gPct}%</strong> de crecimiento, repartida por la <strong>estacionalidad propia de cada tienda</strong> (suavizada) con empuje extra solo en <strong>mayo (HotSale)</strong> y <strong>noviembre (Buen Fin)</strong>, y con un <strong>piso mínimo por formato</strong> (${floorTxt} GE/año).`;
+  const box=document.getElementById('sugSummary');box.innerHTML='';
+  ['WM','BA','SC'].forEach(f=>{
+    const rows=normBud(f);let cur=0,sug=0,fl=0;rows.forEach(r=>{cur+=r.cur;sug+=r.sug;if(r.sug<=p.floor[f]+0.5)fl++;});
+    const d=cur?((sug-cur)/cur):0;
+    box.innerHTML+=`<div class="oppc"><div class="olb"><span class="fbadge" style="background:${css(FCOL[f])}"></span>${FNAME[f]} · piso ${p.floor[f]}/año</div>
+      <div class="ov">${fInt(sug)} <span style="font-size:12px;color:var(--muted)">pzs/año sugerido</span></div>
+      <div class="od">Actual: ${fInt(cur)} pzs · <span class="${d>=0?'up':'down'}" style="font-weight:700">${d>=0?'+':''}${(d*100).toFixed(0)}%</span> · ${fInt(rows.length)} tiendas · ${fInt(fl)} en el piso</div></div>`;
+  });
+  renderPayability();
+  document.getElementById('sugMethod').innerHTML =
+    `<strong>Cómo se construye la meta «Histórico Suavizado»:</strong> se parte de la <em>venta real de cada tienda en 2025</em> y se le pide un crecimiento del <strong>${gPct}%</strong> para 2026. Ese total anual se reparte mes a mes con la <em>estacionalidad propia de la tienda pero suavizada</em> (mezcla al ${(p.alpha*100).toFixed(0)}% su curva individual con la curva del formato), para que la meta sea <strong>estable y no dé saltos bruscos</strong> mes con mes. Se añade crecimiento explícito solo en los <strong>dos picos reales del año: mayo (HotSale) y noviembre (Buen Fin)</strong>. Por último, ninguna meta queda por debajo del <strong>piso mínimo del formato</strong> (equivalente a vender 1 GE cada 5 días en Bodega, cada 3 en Sam's y cada 2.5 en Walmart), para no fijar metas «blandas». La meta se define <strong>una sola vez al inicio del año</strong> y no se sube cuando la tienda cumple. Todos estos parámetros viven en el archivo <em>Parámetros Base</em>.`;
+  renderSugPreview();
+}
+function renderPayability(){
+  // Cobrabilidad: personal cobra si alcanza la meta de GE O la conversión objetivo del formato.
+  // Se compara la meta NUEVA (sugerida) contra la ACTUAL (presupuesto que se tenía).
+  const ct=BUD3.params.conv_target;
+  let html='<div style="border:1px solid var(--border);border-radius:11px;padding:12px 14px;background:var(--surface-1)">';
+  html+='<div style="font-size:12.5px;font-weight:700;margin-bottom:2px">¿Cuántas tiendas pueden cobrar comisión con esta meta?</div>';
+  html+='<div class="ph" style="margin-bottom:10px">El <strong>%</strong> es la proporción de tiendas activas que cobrarían con la <strong>meta nueva</strong> (alcanzando su meta de GE <strong>o</strong> la conversión objetivo: WM 20% · BA 7% · SC 15%). El «<strong>vs anterior</strong>» es cuántas cobraban con el <strong>presupuesto actual</strong>.</div>';
+  html+='<div style="display:flex;gap:20px;flex-wrap:wrap">';
+  let TP=0,TPc=0,TT=0;
+  ['WM','BA','SC'].forEach(f=>{
+    const rows=normBud(f);let paid=0,paidCur=0,tot=0;
+    rows.forEach(r=>{if(r.pz<=0)return;tot++;const hitConv=r.conv>=ct[f];
+      if((r.sug>0&&r.pz>=r.sug)||hitConv)paid++;
+      if((r.cur>0&&r.pz>=r.cur)||hitConv)paidCur++;});
+    TP+=paid;TPc+=paidCur;TT+=tot;const pctv=tot?paid/tot:0;const d=paid-paidCur;
+    const col=pctv>=0.75?'var(--good-ink)':pctv>=0.6?'var(--warning)':'var(--bad)';
+    html+=`<div style="min-width:150px"><div style="font-size:11px;color:var(--muted);font-weight:600"><span class="fbadge" style="background:${css(FCOL[f])}"></span>${FNAME[f]}</div>
+      <div style="font-size:22px;font-weight:700;color:${col}">${fPct(pctv)}</div>
+      <div class="ph" style="font-size:10.5px">cobran con meta nueva · de ${fInt(tot)} activas</div>
+      <div style="font-size:12.5px;margin-top:3px"><strong>${fInt(paid)}</strong> tiendas <span style="color:var(--muted)">vs ${fInt(paidCur)} anterior</span> <span class="${d>=0?'up':'down'}" style="font-weight:700">${d>=0?'+':''}${fInt(d)}</span></div></div>`;
+  });
+  const tot=TT?TP/TT:0;const dG=TP-TPc;
+  html+=`<div style="min-width:150px;border-left:1px solid var(--grid);padding-left:16px"><div style="font-size:11px;color:var(--muted);font-weight:600">GRUPO</div>
+      <div style="font-size:22px;font-weight:700">${fPct(tot)}</div>
+      <div class="ph" style="font-size:10.5px">cobran con meta nueva · de ${fInt(TT)} activas</div>
+      <div style="font-size:12.5px;margin-top:3px"><strong>${fInt(TP)}</strong> tiendas <span style="color:var(--muted)">vs ${fInt(TPc)} anterior</span> <span class="${dG>=0?'up':'down'}" style="font-weight:700">${dG>=0?'+':''}${fInt(dG)}</span></div></div>`;
+  html+='</div>';
+  html+=`<div class="ph" style="margin-top:10px;line-height:1.55">Lectura: con la meta «Histórico Suavizado» cobrarían <strong>${fInt(TP)}</strong> de ${fInt(TT)} tiendas activas (<strong>${fPct(tot)}</strong>), <strong>${dG>=0?fInt(dG)+' más':fInt(-dG)+' menos'}</strong> que con el presupuesto actual. El % está calculado sobre la venta real de 12 meses vs. la meta (que pide +${(BUD3.params.growth*100).toFixed(0)}% de crecimiento); la exigencia se ajusta en <em>Parámetros Base</em>.</div>`;
+  html+='</div>';
+  document.getElementById('sugPay').innerHTML=html;
+}
+function renderSugPreview(){
+  const f=state.formato==='ALL'?'ALL':state.formato;
+  let rows=allBud(f).map(r=>({r,delta:r.sug-r.cur}));
+  rows.sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));rows=rows.slice(0,15);
+  let h=`<thead><tr><th class="l">Tienda</th><th class="l">Fmt</th><th>Nivel</th><th>Clave</th><th>Eleg 12m</th><th>Piezas 12m</th><th>Conv. actual</th><th>Meta anual ACTUAL</th><th>Meta anual SUGERIDA</th><th>Δ pzs</th><th>Δ%</th></tr></thead><tbody>`;
+  rows.forEach(({r,delta})=>{const s=storeByIdx[r.si];const dp=r.cur?delta/r.cur:0;const st=starAt(r.si,state.mi);
+    h+=`<tr><td class="l">${s.n||'(s/n)'}</td><td class="l"><span class="fbadge" style="background:${css(FCOL[s.f])}"></span>${s.f}</td>
+      <td title="${st<0?'sin datos':st+' estrellas'}" style="color:${st>0?STAR_COL[st]:'var(--muted)'};font-weight:700">${st<0?'—':st+'★'}</td>
+      <td>${s.clave}</td><td>${fInt(r.el)}</td><td>${fInt(r.pz)}</td><td>${fPct(r.conv)}</td>
+      <td>${fInt(r.cur)}</td><td>${fInt(r.sug)}</td>
+      <td class="${delta>=0?'up':'down'}">${delta>=0?'+':''}${fInt(delta)}</td>
+      <td class="${delta>=0?'up':'down'}">${dp>=0?'+':''}${(dp*100).toFixed(0)}%</td></tr>`;});
+  h+='</tbody>';
+  document.getElementById('sugTable').innerHTML=h;
+  document.getElementById('sugPreviewPh').textContent='Vista previa · 15 tiendas con mayor ajuste de meta · '+(f==='ALL'?'todos los formatos':FNAME[f])+' · metodología Histórico Suavizado (el Excel incluye TODAS las tiendas)';
+}
+/* build & download Excel */
+function buildExcel(scope){
+  const formats=scope==='ALL'?['WM','BA','SC']:[scope];const p=BUD3.params;
+  const wb=XLSX.utils.book_new();
+  const H1=['Clave','Tienda','Formato','Nivel (estrellas) '+MONTHS_lbl(MONTHS[NM-1]),'Elegibles 12m','Piezas GE 12m','Conversión actual','Venta 2025 (pzs)','Meta anual ACTUAL (pzs)','Meta anual SUGERIDA (pzs)','Δ piezas','Δ %','Monto sugerido anual aprox ($)'];
+  const s1=[H1];
+  formats.forEach(f=>normBud(f).forEach(r=>{const s=storeByIdx[r.si];const ticket=tickBySi[r.si]||0;
+    const delta=r.sug-r.cur;const dp=r.cur?delta/r.cur:0;const st=starAt(r.si,NM-1);
+    s1.push([s.clave,s.n||'',FNAME[f],st<0?'':st,Math.round(r.el),Math.round(r.pz),r.conv,Math.round(r.v2025||0),
+      Math.round(r.cur),Math.round(r.sug),Math.round(delta),dp,Math.round(r.sug*ticket)]);}));
+  const ws1=XLSX.utils.aoa_to_sheet(s1);
+  ws1['!cols']=[{wch:8},{wch:30},{wch:16},{wch:14},{wch:12},{wch:12},{wch:14},{wch:15},{wch:18},{wch:19},{wch:11},{wch:8},{wch:20}];
+  fmtCol(ws1,s1.length,[6,11],'0.0%');fmtCol(ws1,s1.length,[4,5,7,8,9,10,12],'#,##0');
+  XLSX.utils.book_append_sheet(wb,ws1,'Resumen por tienda');
+  const H2=['Clave','Tienda','Formato',...MES12,'Total anual'];
+  const s2=[H2];
+  formats.forEach(f=>normBud(f).forEach(r=>{const s=storeByIdx[r.si];const mm=r.m12.map(x=>Math.round(x));
+    s2.push([s.clave,s.n||'',FNAME[f],...mm,mm.reduce((a,b)=>a+b,0)]);}));
+  const ws2=XLSX.utils.aoa_to_sheet(s2);ws2['!cols']=[{wch:8},{wch:30},{wch:16},...MES12.map(_=>({wch:6})),{wch:11}];
+  fmtCol(ws2,s2.length,[...Array(13).keys()].map(i=>i+3),'#,##0');
+  XLSX.utils.book_append_sheet(wb,ws2,'Meta mensual sugerida');
+  const s3=[H2.slice()];
+  formats.forEach(f=>normBud(f).forEach(r=>{const s=storeByIdx[r.si];const mm=curMonthly(r.si).map(x=>Math.round(x));
+    s3.push([s.clave,s.n||'',FNAME[f],...mm,mm.reduce((a,b)=>a+b,0)]);}));
+  const ws3=XLSX.utils.aoa_to_sheet(s3);ws3['!cols']=ws2['!cols'];
+  fmtCol(ws3,s3.length,[...Array(13).keys()].map(i=>i+3),'#,##0');
+  XLSX.utils.book_append_sheet(wb,ws3,'Meta mensual actual (ref)');
+  // Metodología · Histórico Suavizado
+  const gPct=(p.growth*100).toFixed(0);
+  const m=[['Metodología de presupuesto · «Histórico Suavizado»'],[],
+      ['Objetivo','Fijar una meta por tienda estable, alcanzable y no «blanda», definida una sola vez al inicio del año.'],
+      ['Paso 1 · Base','Venta REAL de cada tienda en el año 2025 (piezas de GE).'],
+      ['Paso 2 · Crecimiento','Se aplica un crecimiento objetivo de '+gPct+'% para el total anual 2026.'],
+      ['Paso 3 · Reparto mensual','El total se distribuye por la estacionalidad PROPIA de la tienda, suavizada: mezcla α='+p.alpha+' de su curva individual con (1-α) de la curva del formato, para evitar saltos bruscos mes a mes.'],
+      ['Paso 4 · Eventos','Crecimiento explícito solo en los dos picos reales del año: mayo (HotSale) y noviembre (Buen Fin), tomando como referencia lo hecho en esos meses del año previo.'],
+      ['Paso 5 · Piso mínimo','Ninguna meta anual queda por debajo del piso del formato (ver tabla). El piso escala según lo «bueno» que es cada formato.'],
+      ['Regla de piso','Meta anual = máx( Venta 2025 × '+(1+p.growth).toFixed(2)+' , Piso del formato )'],
+      [],['Piso mínimo por formato (equivalente diario)','GE / año','Equivale a'],
+      ['Walmart',p.floor.WM,'1 GE cada 2.5 días'],
+      ['Bodega Aurrerá',p.floor.BA,'1 GE cada 5 días'],
+      ['Sam’s Club',p.floor.SC,'1 GE cada 3 días'],
+      [],['Clasificación por estrellas (NO incremental: la estrella = número de criterios cumplidos, de 5)'],
+      ['Criterio 1','Vendió al menos 12 GE en los últimos 12 meses'],
+      ['Criterio 2','No decreció: últimos 3 meses ≥ los mismos 3 meses del año previo (trimestral)'],
+      ['Criterio 3','Cumplió la suma de sus metas de los últimos 12 meses'],
+      ['Criterio 4','Cumplió su meta individual en al menos 10 meses distintos'],
+      ['Criterio 5','Logró ≥80% de la conversión objetivo acumulada en 12 meses (WM 20% · BA 7% · SC 15%)'],
+      ['Nota','Todos estos parámetros (crecimiento, α, meses de evento, pisos, conversión objetivo) viven en el archivo «Parámetros Base» y pueden ajustarse ahí.'],
+      [],['Generado',DB.meta.generated+' · Fuente: Histórico WM/BA/SC (carpeta Avance de ventas)']];
+  const ws4=XLSX.utils.aoa_to_sheet(m);ws4['!cols']=[{wch:34},{wch:12},{wch:52}];
+  for(let R=12;R<=14;R++){const a=XLSX.utils.encode_cell({r:R,c:1});if(ws4[a])ws4[a].z='#,##0';}
+  XLSX.utils.book_append_sheet(wb,ws4,'Metodología');
+  const fn=(scope==='ALL'?'Presupuesto_GE_GrupoWalmart_':'Presupuesto_GE_'+scope+'_')+'HistSuavizado.xlsx';
+  XLSX.writeFile(wb,fn);
+  document.getElementById('sugStatus').textContent='✓ '+fn+' descargado';
+  setTimeout(()=>document.getElementById('sugStatus').textContent='',4000);
+}
+function fmtCol(ws,nrows,cols,z){for(let R=1;R<nrows;R++)cols.forEach(C=>{const a=XLSX.utils.encode_cell({r:R,c:C});if(ws[a]&&ws[a].t==='n')ws[a].z=z;});}
+function buildMoversExcel(){
+  if(!clsMovers.length)return;const mi=state.mi;
+  const H=['Clave','Tienda','Formato','Distrito','Territorial','Nivel anterior','Nivel actual','Movimiento','Δ niveles','Monto GE ($)','Piezas GE','Conversión','Alcance','Elegibles','Próxima estrella','Cómo lograrla'];
+  const rows=[H];
+  clsMovers.slice().sort((a,b)=>b.dir-a.dir||b.now-a.now).forEach(m=>{const s=storeByIdx[m.si];const g=segOf(m.si);const r=storeHistory(m.si)[mi];
+    const monto=r?r[2]:0,cant=r?r[3]:0,meta=r?r[4]:0,el=r?r[5]:0;const conv=el?cant/el:0,alc=meta?cant/meta:0;const pr=proximaJS(m.si,mi);
+    rows.push([s.clave,s.n||'',FNAME[s.f],g.d,g.t,m.was+'★',m.now+'★',m.dir>0?'Subió':'Bajó',(m.now-m.was>0?'+':'')+(m.now-m.was),
+      Math.round(monto),Math.round(cant),conv,alc,Math.round(el),pr?(pr.max?'Nivel máximo':pr.name):'',pr&&!pr.max?pr.how:'' ]);});
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:8},{wch:28},{wch:14},{wch:9},{wch:16},{wch:12},{wch:12},{wch:10},{wch:8},{wch:14},{wch:10},{wch:11},{wch:9},{wch:11},{wch:14},{wch:46}];
+  fmtCol(ws,rows.length,[11,12],'0.0%');fmtCol(ws,rows.length,[9,10,13],'#,##0');
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Movimientos');
+  const fnf=state.formato==='ALL'?'Grupo':state.formato;
+  XLSX.writeFile(wb,'Movimientos_Clasificacion_'+fnf+'_'+MONTHS[mi]+'.xlsx');
+}
+/* ============ clasificación por estrellas ============ */
+const STAR_GOLD='#e8a200';
+function starGlyphs(lv){return `<span style="color:${STAR_GOLD}">${'★'.repeat(lv)}</span><span style="color:var(--axis)">${'☆'.repeat(5-lv)}</span>`;}
+let clsMovers=[];
+function renderStars(){
+  let mi=state.mi;let starNote='';
+  const anyLv=STARS.levels[Object.keys(STARS.levels)[0]]; const lastStar=STARS.start_idx+(anyLv?anyLv.length:0)-1;
+  if(mi>lastStar){mi=lastStar;starNote=' · clasificación al último cierre ('+mlabel(lastStar)+')';}
+  const ph=document.getElementById('starPh');const grid=document.getElementById('clsGrid');
+  const dlBtn=document.getElementById('dlMovers');
+  const showF=state.formato==='ALL'?['WM','BA','SC']:[state.formato];
+  if(mi<STARS.start_idx){
+    ph.textContent='Disponible desde '+mlabel(STARS.start_idx);
+    grid.innerHTML='<div class="ph">La clasificación se calcula a partir de Ene-2025. Selecciona un mes de ese periodo en adelante.</div>';
+    if(dlBtn)dlBtn.style.display='none';clsMovers=[];
+    return;
+  }
+  const hasPrev=mi>STARS.start_idx;
+  const counts=Array(6).fill(0);
+  // LLEGADAS a cada nivel: arrUp = llegaron de abajo (subieron); arrDown = llegaron de arriba (cayeron)
+  const arrUp=Array(6).fill(0), arrDown=Array(6).fill(0);
+  clsMovers=[];
+  Object.keys(STARS.levels).forEach(si=>{const s=storeByIdx[+si];if(!showF.includes(s.f))return;if(!segPass(+si))return;
+    const now=starAt(+si,mi);if(now>=0)counts[now]++;
+    if(hasPrev){const was=starAt(+si,mi-1);
+      if(now>=0&&was>=0&&now!==was){
+        if(now>was)arrUp[now]++; else arrDown[now]++;
+        clsMovers.push({si:+si,was,now,dir:now>was?1:-1});
+      }}
+  });
+  const total=counts.reduce((a,b)=>a+b,0)||1;
+  ph.textContent=(state.formato==='ALL'?'Todos los formatos':FNAME[state.formato])+' · '+mlabel(mi)+' · '+fInt(counts.reduce((a,b)=>a+b,0))+' tiendas'+(hasPrev?' · movimiento vs. '+mlabel(mi-1):'')+starNote;
+  grid.innerHTML=[0,1,2,3,4,5].map(lv=>{
+    let mvTxt;
+    if(!hasPrev){mvTxt='<span style="color:var(--muted)">—</span>';}
+    else if(lv===0){ mvTxt=`<span class="down">▼ ${arrDown[0]}</span> cayeron aquí`; }
+    else if(lv===5){ mvTxt=`<span class="up">▲ ${arrUp[5]}</span> subieron aquí`; }
+    else { mvTxt=`<span class="up">▲ ${arrUp[lv]}</span> subieron<br><span class="down">▼ ${arrDown[lv]}</span> cayeron`; }
+    return `<div class="clscell">
+      <div class="cs-stars">${starGlyphs(lv)}</div>
+      <div class="cs-mid"><div class="cs-count">${fInt(counts[lv])}</div><div class="cs-lbl">${counts[lv]===1?'tienda':'tiendas'} · ${Math.round(counts[lv]/total*100)}%</div></div>
+      <div class="cs-move">${mvTxt}</div>
+    </div>`;}).join('');
+  if(dlBtn)dlBtn.style.display=(hasPrev&&clsMovers.length)?'':'none';
+}
+/* ============ ranking ============ */
+function metricOfRec(r,key){const[,,monto,cant,meta,eleg]=r;if(key==='monto')return monto;if(key==='cant')return cant;if(key==='conv')return eleg?cant/eleg:0;if(key==='alc')return meta?cant/meta:0;return 0;}
+function renderRank(){
+  const f=state.formato,mi=state.mi,key=state.rankMetric;
+  let rows=recsAt(mi,f).filter(r=>{if(key==='conv')return r[5]>0;if(key==='alc')return r[4]>0;return true;});
+  rows.sort((a,b)=>metricOfRec(b,key)-metricOfRec(a,key));
+  if(state.rankDir==='bottom')rows.reverse();
+  rows=rows.slice(0,15);
+  let h=`<thead><tr><th class="rank"></th><th class="l">Tienda</th><th class="l">Formato</th><th>Clave</th><th>Monto</th><th>Piezas</th><th>Conv.</th><th>Alcance</th><th>Elegibles</th></tr></thead><tbody>`;
+  rows.forEach((r,i)=>{const s=storeByIdx[r[0]];const[,,monto,cant,meta,eleg]=r;
+    h+=`<tr><td class="rank">${i+1}</td><td class="l">${s.n||'(s/n)'}</td>
+      <td class="l"><span class="fbadge" style="background:${css(FCOL[s.f])}"></span>${s.f}</td>
+      <td>${s.clave}</td><td>${fMoneyFull(monto)}</td><td>${fInt(cant)}</td>
+      <td>${eleg?fPct(cant/eleg):'—'}</td><td>${meta?fAlc(cant/meta):'—'}</td><td>${fInt(eleg)}</td></tr>`;});
+  h+='</tbody>';
+  document.getElementById('rankTable').innerHTML=h;
+  document.getElementById('rankPh').textContent=(state.rankDir==='top'?'Mejores':'Menores')+' 15 por '+({monto:'monto',cant:'piezas',conv:'conversión',alc:'alcance'})[key]+' · '+(f==='ALL'?'todos los formatos':FNAME[f])+' · '+mlabel(mi);
+}
+/* ============ store search ============ */
+function buildStoreList(){const dl=document.getElementById('storeList');
+  dl.innerHTML=DB.stores.map(s=>`<option value="${(s.n||'').replace(/"/g,'')} · ${s.clave} (${s.f})">`).join('');}
+function findStore(q){q=q.trim().toLowerCase();if(!q)return null;
+  // try clave exact
+  let cand=DB.stores.filter(s=>String(s.clave)===q);
+  if(!cand.length)cand=DB.stores.filter(s=>(s.n||'').toLowerCase().includes(q)||(''+s.clave).includes(q)||(`${(s.n||'').toLowerCase()} · ${s.clave} (${s.f.toLowerCase()})`).includes(q));
+  return cand.length?cand[0]:null;}
+function storeHistory(si){const h=[];for(let mi=0;mi<NM;mi++)h.push(null);
+  for(const r of DB.recs){if(r[0]===si)h[r[1]]=r;}return h;}
+function renderStore(s){
+  const res=document.getElementById('storeResult');res.classList.add('on');
+  document.getElementById('storeName').textContent=(s.n||'(sin nombre)');
+  const stv=starAt(s.i,state.mi);const prov=state.mi<STARS.dic25_idx;const mask=critAt(s.i,state.mi);
+  const starHtml=stv<0?'':` · <span style="font-weight:700">${starGlyphs(stv)} ${stv}/5</span>`;
+  document.getElementById('storeMeta').innerHTML=`Formato ${FNAME[s.f]} · Clave ${s.clave}${starHtml} · al cierre de ${mlabel(state.mi)}`;
+  const chk=document.getElementById('storeCrit');
+  if(mask<0||stv<0){chk.innerHTML='';}
+  else{chk.innerHTML='<div style="font-size:12px;line-height:1.9;margin-top:2px">'+CRIT.map((c,i)=>{
+    const pend=prov&&i===1;const ok=(mask>>i)&1;
+    const ic=pend?'<span style="color:var(--muted)">◔</span>':ok?'<span style="color:var(--good-ink)">✓</span>':'<span style="color:var(--bad)">✗</span>';
+    return `<span style="display:inline-flex;align-items:center;gap:6px;margin-right:16px">${ic} ${c}${pend?' <span style="color:var(--muted)">(pendiente)</span>':''}</span>`;}).join('')+'</div>';}
+  const px=document.getElementById('storeProx');const pr=(stv<0)?null:proximaJS(s.i,state.mi);
+  if(!pr){px.innerHTML='';}
+  else if(pr.max){px.innerHTML='<div style="font-size:12.5px;background:rgba(12,163,12,.10);border:1px solid var(--border);border-radius:8px;padding:8px 11px;display:inline-block">⭐ <strong>Nivel máximo (5★)</strong> — mantener los 5 logros</div>';}
+  else{px.innerHTML=`<div style="font-size:12.5px;background:var(--chip);border:1px solid var(--border);border-radius:8px;padding:8px 11px;display:inline-block">🎯 Próxima estrella: <strong>${pr.name}</strong> — ${pr.how}</div>`;}
+  const hist=storeHistory(s.i);
+  const last=[...hist].reverse().find(x=>x);const li=hist.lastIndexOf(last);
+  const py=li-12>=0?hist[li-12]:null;
+  function m(r,k){if(!r)return null;const[,,mo,ca,me,el]=r;return k==='monto'?mo:k==='cant'?ca:k==='conv'?(el?ca/el:0):k==='alc'?(me?ca/me:0):0;}
+  const sk=document.getElementById('storeKpis');
+  const cells=[['Monto',fMoneyFull(m(last,'monto')||0),'monto'],['Piezas',fInt(m(last,'cant')||0),'cant'],['Conversión',fPct(m(last,'conv')||0),'conv'],['Alcance',fAlc(m(last,'alc')||0),'alc']];
+  sk.innerHTML=cells.map(c=>{const cur=m(last,c[2]);const prev=py?m(py,c[2]):null;let d='';
+    if(prev!==null&&prev!==undefined){if(c[2]==='conv'){const dd=(cur-prev)*100;d=`<span class="${dd>=0?'up':'down'}" style="font-size:11px">${dd>=0?'+':''}${dd.toFixed(1)}pp</span>`;}else{const r=pct(cur,prev);if(r!==null)d=`<span class="${r>=0?'up':'down'}" style="font-size:11px">${r>=0?'+':''}${(r*100).toFixed(0)}%</span>`;}}
+    return `<div class="sk"><span class="l">${c[0]}</span><span class="v">${c[1]} ${d}</span></div>`;}).join('');
+  // chart: monto bars + conv line
+  const labels=MONTHS.map((_,i)=>mlabel(i));
+  const montos=hist.map(r=>r?r[2]:null);const convs=hist.map(r=>r&&r[5]?r[3]/r[5]:null);
+  const o=baseOpts();o.scales.y.ticks.callback=v=>fMoney(v);
+  o.scales.y1={position:'right',grid:{display:false},border:{display:false},ticks:{color:mutedC(),font:{size:11},callback:v=>(v*100).toFixed(0)+'%'}};
+  o.plugins.tooltip.callbacks={label:c=>c.dataset.yAxisID==='y1'?('Conv: '+(c.parsed.y!=null?fPct(c.parsed.y):'—')):('Monto: '+(c.parsed.y!=null?fMoneyFull(c.parsed.y):'—'))};
+  if(chStore)chStore.destroy();
+  chStore=new Chart(document.getElementById('chStore'),{data:{labels,datasets:[
+    {type:'bar',label:'Monto',data:montos,backgroundColor:css(FCOL[s.f]),borderRadius:3,yAxisID:'y',barPercentage:.7},
+    {type:'line',label:'Conv',data:convs,borderColor:css('--cons'),borderWidth:2,pointRadius:0,pointHoverRadius:4,yAxisID:'y1',tension:.25,spanGaps:true}
+  ]},options:o});
+}
+/* ============ wiring ============ */
+function seg(id,cb){document.querySelectorAll('#'+id+' button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('active'));b.classList.add('active');cb(b.dataset.v);});}
+function refreshAll(){updProjBanner();renderExec();renderKPIs();renderTrend();renderPie();renderYoY();renderOpp();renderStars();renderBudget();renderSug();renderRank();}
+function initMonths(){const s=document.getElementById('selMonth');s.innerHTML=MONTHS.map((m,i)=>`<option value="${i}" ${i===NM-1?'selected':''}>${mlabel(i)}</option>`).join('');
+  s.onchange=()=>{state.mi=+s.value;refreshAll();};}
+seg('segFormato',v=>{state.formato=v;refreshAll();});
+seg('segBase',v=>{state.base=v;renderKPIs();});
+seg('segMetric',v=>{state.metric=v;renderTrend();});
+seg('segYoY',v=>{state.yoy=v;renderYoY();});
+seg('segRankDir',v=>{state.rankDir=v;renderRank();});
+seg('segRankMetric',v=>{state.rankMetric=v;renderRank();});
+// Segmentación: poblar filtros (se ocultan si solo hay un valor = placeholder)
+(function initSeg(){
+  const dist=[...new Set(Object.values(SEG).map(g=>g.d))].filter(x=>x!=='').sort();
+  const terr=[...new Set(Object.values(SEG).map(g=>g.t))].filter(x=>x!=='').sort();
+  const sd=document.getElementById('selDistrito'), st=document.getElementById('selTerritorial');
+  sd.innerHTML='<option value="ALL">Todos</option>'+dist.map(d=>`<option value="${d}">${d}</option>`).join('');
+  st.innerHTML='<option value="ALL">Todos</option>'+terr.map(t=>`<option value="${t}">${t}</option>`).join('');
+  if(dist.length>1)document.getElementById('ctlDistrito').style.display='';
+  if(terr.length>1)document.getElementById('ctlTerritorial').style.display='';
+  sd.onchange=()=>{state.distrito=sd.value;refreshAll();};
+  st.onchange=()=>{state.territorial=st.value;refreshAll();};
+})();
+document.getElementById('themeBtn').onclick=()=>{const r=document.documentElement;r.dataset.theme=r.dataset.theme==='dark'?'light':'dark';refreshAll();if(document.getElementById('storeResult').classList.contains('on'))document.getElementById('storeGo').click();};
+{const lo=document.getElementById('logoutBtn');if(lo)lo.onclick=()=>location.reload();}
+document.getElementById('storeGo').onclick=()=>{const s=findStore(document.getElementById('storeInput').value);
+  if(s){document.getElementById('storeHint').textContent='';renderStore(s);}else{document.getElementById('storeHint').textContent='No se encontró la tienda.';}};
+document.getElementById('storeInput').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('storeGo').click();});
+document.querySelectorAll('.xls').forEach(b=>b.onclick=()=>{document.getElementById('sugStatus').textContent='Generando…';setTimeout(()=>buildExcel(b.dataset.x),30);});
+function mkToggle(btnId,wrapId,showTxt,hideTxt){const b=document.getElementById(btnId),w=document.getElementById(wrapId);
+  b.onclick=()=>{const open=w.classList.toggle('open');b.textContent=(open?'▾ ':'▸ ')+(open?hideTxt:showTxt);};}
+mkToggle('tglSug','wrapSug','Ver detalle por tienda','Ocultar detalle');
+mkToggle('tglRank','wrapRank','Ver lista','Ocultar lista');
+document.getElementById('dlMovers').onclick=buildMoversExcel;
+
+/* tags + footer */
+document.getElementById('tagRange').textContent=mlabel(0)+' – '+mlabel(NM-1);
+document.getElementById('tagStores').textContent=fInt(DB.stores.length)+' tiendas/clubes';
+document.getElementById('foot').innerHTML=`Fuente: archivos <em>Histórico WM · Histórico BA · Histórico SC</em> (carpeta «Avance de ventas»). ${NM} meses de historia (${mlabel(0)}–${mlabel(NM-1)}). Columnas homologadas: Monto GE ($), Piezas GE, Presupuesto, Alcance de plan, Elegibles y Conversión. «Base YTD» acumula de enero del año seleccionado al mes de cierre. Crecimientos: <strong>YoY</strong> = mismo mes del año anterior; <strong>YTD vs YTD</strong> = acumulado del año vs. mismo periodo del año previo. Estructura preparada para incorporar catálogos de <strong>zona</strong> y <strong>vendedor</strong> a nivel tienda. Generado ${DB.meta.generated}.`;
+
+initMonths();buildStoreList();refreshAll();
+</script>
+</body>
+</html>

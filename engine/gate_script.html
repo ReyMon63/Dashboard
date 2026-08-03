@@ -1,0 +1,58 @@
+<script>
+(function(){
+  // --- SHA-256 puro (sin dependencias, funciona en file:// y https) ---
+  function sha256(ascii){
+    function rr(v,a){return (v>>>a)|(v<<(32-a));}
+    var mp=Math.pow, maxW=mp(2,32), h=[], k=[], primeC=0, i=2;
+    function isP(n){for(var f=2;f<=Math.sqrt(n);f++)if(n%f===0)return false;return true;}
+    for(;primeC<64;i++){if(isP(i)){if(primeC<8)h[primeC]=(mp(i,.5)*maxW)|0;k[primeC]=(mp(i,1/3)*maxW)|0;primeC++;}}
+    var bytes=[], words=[]; ascii=unescape(encodeURIComponent(ascii));
+    for(i=0;i<ascii.length;i++)bytes.push(ascii.charCodeAt(i)&0xff);
+    var bitLen=bytes.length*8; bytes.push(0x80);
+    while(bytes.length%64-56)bytes.push(0);
+    for(i=0;i<bytes.length;i++)words[i>>2]=(words[i>>2]||0)|(bytes[i]<<((3-i%4)*8));
+    words[words.length]= (bitLen/maxW)|0; words[words.length]=bitLen>>>0;
+    var w=[],a,b,c,d,e,f,g,hh,t1,t2;
+    for(var j=0;j<words.length;){
+      for(i=0;i<16;i++)w[i]=words[j+i];
+      for(i=16;i<64;i++){var s0=rr(w[i-15],7)^rr(w[i-15],18)^(w[i-15]>>>3),s1=rr(w[i-2],17)^rr(w[i-2],19)^(w[i-2]>>>10);w[i]=(w[i-16]+s0+w[i-7]+s1)|0;}
+      a=h[0];b=h[1];c=h[2];d=h[3];e=h[4];f=h[5];g=h[6];hh=h[7];
+      for(i=0;i<64;i++){var S1=rr(e,6)^rr(e,11)^rr(e,25),ch=(e&f)^(~e&g);t1=(hh+S1+ch+k[i]+w[i])|0;var S0=rr(a,2)^rr(a,13)^rr(a,22),maj=(a&b)^(a&c)^(b&c);t2=(S0+maj)|0;hh=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0;}
+      h[0]=(h[0]+a)|0;h[1]=(h[1]+b)|0;h[2]=(h[2]+c)|0;h[3]=(h[3]+d)|0;h[4]=(h[4]+e)|0;h[5]=(h[5]+f)|0;h[6]=(h[6]+g)|0;h[7]=(h[7]+hh)|0;
+      j+=16;
+    }
+    var out=''; for(i=0;i<8;i++)for(var x=3;x>=0;x--){var bt=(h[i]>>>(x*8))&0xff;out+=(bt<0x10?'0':'')+bt.toString(16);}
+    return out;
+  }
+  var USERS=__HASHES__;
+  // auto-cierre por inactividad (20 min): vuelve a la pantalla de acceso
+  var IDLE_MS=20*60*1000, idleT=null;
+  function resetIdle(){ if(idleT)clearTimeout(idleT); idleT=setTimeout(function(){location.reload();}, IDLE_MS); }
+  function startIdle(){ ['mousemove','mousedown','keydown','scroll','touchstart','click'].forEach(function(ev){
+      window.addEventListener(ev, resetIdle, {passive:true}); }); resetIdle(); }
+  var gate=document.getElementById('ge-gate'), form=document.getElementById('ge-gate-form'),
+      pass=document.getElementById('ge-gate-pass'), msg=document.getElementById('ge-gate-msg'),
+      card=document.querySelector('.ge-gate-card'), eye=document.getElementById('ge-gate-eye');
+  document.documentElement.style.overflow='hidden';
+  setTimeout(function(){try{pass.focus();}catch(e){}},400);
+  eye.addEventListener('click',function(){pass.type=pass.type==='password'?'text':'password';pass.focus();});
+  function fail(t){msg.textContent=t;msg.className='ge-gate-msg show';card.classList.remove('ge-shake');void card.offsetWidth;card.classList.add('ge-shake');pass.select();}
+  form.addEventListener('submit',function(ev){
+    ev.preventDefault();
+    var v=(pass.value||'').trim();
+    if(!v){fail('Escribe tu clave de acceso.');return;}
+    var name=USERS[sha256(v)];
+    if(name){
+      msg.textContent='Acceso concedido · Bienvenido, '+name;
+      msg.className='ge-gate-msg show ok';
+      setTimeout(function(){
+        gate.classList.add('ge-hide');
+        document.documentElement.style.overflow='';
+        setTimeout(function(){if(gate&&gate.parentNode)gate.parentNode.removeChild(gate);
+          window.dispatchEvent(new Event('resize'));},650);
+        startIdle();
+      },650);
+    } else { fail('Clave incorrecta. Verifica e intenta de nuevo.'); }
+  });
+})();
+</script>
