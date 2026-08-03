@@ -43,6 +43,14 @@ for k in ["WM","BA","SC"]:
     month_ym|=set(valid.values())
     wb.close()
 months=sorted(month_ym)                       # p.ej. 2024-01 .. 2026-06
+# guardia de contigüidad: los meses cerrados deben ser consecutivos (sin huecos)
+def _mnum(ym): y,m=map(int,ym.split('-')); return y*12+(m-1)
+_seq=[_mnum(m) for m in months]
+_gaps=[months[i] for i in range(1,len(_seq)) if _seq[i]-_seq[i-1]!=1]
+if _gaps:
+    print(f"ERROR: hueco en la secuencia de meses del histórico (falta el mes anterior a {', '.join(_gaps)}). "
+          f"No continúo para no publicar datos corridos. Revisa que se haya agregado la hoja del mes que cerró.")
+    sys.exit(2)
 midx={m:i for i,m in enumerate(months)}
 
 stores={}; records=[]; warn=[]
