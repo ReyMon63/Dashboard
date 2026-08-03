@@ -804,6 +804,10 @@ function renderKPIs(){
   const curMes=metricsFromExt(kpiValues(f,mi,'MES'));
   const yoyYtd=pmi!==null?metricsFromExt(kpiValues(f,pmi,'YTD')):null;
   const curYtd=metricsFromExt(kpiValues(f,mi,'YTD'));
+  // equivalencia diaria de Piezas GE por tienda CON venta (sin fracciones de GE)
+  const aggMes=aggAt(f,mi), conVenta=aggMes[4]||1;
+  const dimK=(()=>{const[y,mm]=MONTHS[mi].split('-').map(Number);return new Date(y,mm,0).getDate();})();
+  const geDaily=(()=>{const pd=aggMes[1]/conVenta/dimK; if(pd>=1){const n=Math.round(pd);return n+' GE '+(n===1?'diaria':'diarias')+' por tienda con venta';} const dd=Math.max(1,Math.round(1/pd)); return dd<=1?'1 GE al día por tienda con venta':'1 GE cada '+dd+' días por tienda con venta';})();
   const box=document.getElementById('kpis');box.innerHTML='';
   KDEF.forEach(k=>{
     const val=cur[k.key];
@@ -815,7 +819,7 @@ function renderKPIs(){
     el.innerHTML=`${k.hero?'<div class="hero-mark"></div>':''}
       <div class="k-label">${k.label}</div>
       <div class="k-val">${k.fmt(val)}</div>
-      <div class="k-sub">${k.sub}${subExtra}</div>
+      <div class="k-sub">${k.key==='cant'?k.sub+' · ≈ '+geDaily:k.sub+subExtra}</div>
       <div class="deltas">
         <div class="delta"><span class="dl">YoY mismo mes</span>${yoyd}</div>
         <div class="delta"><span class="dl">YTD vs YTD</span>${ytdd}</div>
@@ -895,15 +899,16 @@ function renderOpp(){
   rows.forEach(r=>{const[si,,monto,cant,meta,eleg]=r;const c=eleg?cant/eleg:0;if(c<avgConv&&eleg>0){extraPiezas+=(avgConv-c)*eleg;}});
   const extraMonto=extraPiezas*ticket;
   const noConv=agg[3]-agg[1]; // elegibles - piezas
-  const stCount=rows.length||1;                                   // tiendas en el ámbito
   const dim=(()=>{const[y,m]=MONTHS[mi].split('-').map(Number);return new Date(y,m,0).getDate();})();
-  const perDay=noConv/stCount/dim;                                // elegibles sin GE por tienda y día
-  const perDayTxt=perDay>=10?fInt(Math.round(perDay)):perDay.toFixed(1);
+  // enfoque en tiendas SIN venta: elegibles que deja pasar cada una al día
+  let elegZero=0, zeroN=0;
+  rows.forEach(r=>{ if(r[3]<=0){ elegZero+=(r[5]||0); zeroN++; } });   // r[3]=piezas, r[5]=elegibles
+  const perZeroTxt = zeroN ? `, equivalente a ${fInt(Math.max(1,Math.round(elegZero/zeroN/dim)))} Elegibles diarios que deja pasar cada tienda sin venta` : '';
   document.getElementById('oppPh').textContent='Si las tiendas por debajo del promedio ('+fPct(avgConv)+') alcanzaran el promedio de '+(f==='ALL'?'su grupo':FNAME[f])+' · '+mlabel(mi);
   document.getElementById('oppBox').innerHTML=`
     <div class="oppc"><div class="olb">Piezas potenciales</div><div class="ov">+${fInt(extraPiezas)}</div><div class="od">GE adicionales al mes cerrando la brecha a promedio</div></div>
     <div class="oppc"><div class="olb">Monto potencial</div><div class="ov">${fMoney(extraMonto)}</div><div class="od">estimado con ticket promedio de ${fMoneyFull(ticket)}</div></div>
-    <div class="oppc"><div class="olb">Elegibles sin GE</div><div class="ov">${fInt(noConv)}</div><div class="od">base no convertida este mes, equivalente a ${perDayTxt} Elegibles diarios por tienda</div></div>
+    <div class="oppc"><div class="olb">Elegibles sin GE</div><div class="ov">${fInt(noConv)}</div><div class="od">base no convertida este mes${perZeroTxt}</div></div>
     <div class="oppc"><div class="olb">Conversión actual</div><div class="ov">${fPct(avgConv)}</div><div class="od">del ${f==='ALL'?'consolidado':FNAME[f]}</div></div>`;
   // pareto
   const arr=rows.map(r=>r[2]).filter(x=>x>0).sort((a,b)=>b-a);const total=arr.reduce((a,b)=>a+b,0);
