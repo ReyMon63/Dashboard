@@ -1,5 +1,11 @@
 {
- "published_date": "",
- "fp": {},
- "hist": ""
+ "published_date": "2026-08-03",
+ "fp": {
+  "BA": "1ce92369b9c7",
+  "WM": "026ed6f723c0",
+  "SC": "a0c69e95ff79"
+ },
+ "hist": "2026-06",
+ "cur_month": "2026-07",
+ "asof": 31
 }
