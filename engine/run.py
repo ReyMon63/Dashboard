@@ -103,6 +103,24 @@ def freeze_into_closed(dc, month, snap):
         dc['recs'].append([si, mi, round(venta), round(ge), round(plan), round(eleg)])
     return dc
 
+def cierre_fp(snap):
+    base="|".join(f"{f}:{snap['agg'][f][0]}:{snap['agg'][f][1]}:{snap['agg'][f][4]}" for f in ['WM','BA','SC'])
+    return hashlib.md5(base.encode()).hexdigest()[:12]
+
+def cierre_complete(snap):
+    # los 3 formatos deben traer venta y al menos una GE
+    return all(snap['agg'][f][0]>0 and snap['agg'][f][4]>0 for f in ['WM','BA','SC'])
+
+def empty_cierre(path):
+    try:
+        wb=openpyxl.load_workbook(path)
+        for sh in wb.sheetnames:
+            ws=wb[sh]
+            if ws.max_row>1: ws.delete_rows(2, ws.max_row-1)
+        wb.save(path); return True
+    except Exception as e:
+        print("  · aviso: no pude vaciar el Cierre:", e); return False
+
 def main():
     today=datetime.date.today()
     dcp=os.path.join(REPO,"data_closed.json")
@@ -110,6 +128,27 @@ def main():
     last_closed=dc['meta']['months'][-1]
     cur_month=next_month(last_closed)
     rolled=None
+    cier_fp=None
+    # ---- CIERRE EXPLICITO: archivo 'Cierre_Ventas.xlsx' con los 3 formatos ----
+    cierre_src=os.path.join(INPUTS,"Cierre_Ventas.xlsx")
+    if os.path.exists(cierre_src):
+        snap_c=avance_raw(cierre_src, stores)
+        cier_fp=cierre_fp(snap_c)
+        st_prev=load_state()
+        this_cal=f"{today.year:04d}-{today.month:02d}"
+        if not cierre_complete(snap_c):
+            print("Cierre presente pero incompleto (falta algún formato con datos). No congelo aún.")
+        elif cur_month in dc['meta']['months']:
+            print(f"{cur_month} ya está cerrado. Ignoro el Cierre.")
+        elif cur_month>=this_cal:
+            print(f"El mes en curso {cur_month} aún no termina; un 'Cierre' ahora sería de un mes previo ya cerrado. Lo ignoro.")
+        elif st_prev.get('cierre_fp')==cier_fp and not FORCE:
+            print("Este Cierre ya se procesó. Nada nuevo que congelar.")
+        else:
+            dc=freeze_into_closed(dc, cur_month, snap_c)
+            json.dump(dc, open(dcp,"w"), ensure_ascii=False, separators=(',',':'))
+            rolled=cur_month; last_closed=cur_month; cur_month=next_month(cur_month)
+            print(f"OK Cierre detectado: {rolled} congelado en data_closed. Ahora en curso: {cur_month}.")
     if AUTOFREEZE:
         snap=avance_raw(os.path.join(INPUTS,"Avance_Ventas.xlsx"), stores)  # foto cruda del Avance actual
         pend=load_pending()
@@ -164,7 +203,8 @@ def main():
     print(f"  · index.html armado · {nusers} usuarios en el gate")
 
     shutil.copy(os.path.join(WORK,"index.html"), os.path.join(REPO,"index.html"))
-    st={"published_date":today.isoformat(),"fp":fp,"last_closed":last_closed,"cur_month":cur_month,"asof":asof}
+    st={"published_date":today.isoformat(),"fp":fp,"last_closed":last_closed,"cur_month":cur_month,"asof":asof,
+        "cierre_fp": (cier_fp if rolled else load_state().get("cierre_fp",""))}
     json.dump(st, open(os.path.join(REPO,"state.json"),"w"), ensure_ascii=False, indent=1)
     if DRY:
         print("[--dry] index.html actualizado. No hago git push."); return
@@ -181,6 +221,17 @@ def main():
         print("No hay token de GitHub. index.html quedó armado pero no lo publiqué."); return
     run(["git","push",f"https://x-access-token:{tok}@github.com/ReyMon63/Dashboard.git","main"], REPO)
     print("Publicado en GitHub Pages.")
+    if rolled:
+        hist=os.environ.get("HIST_DIR","").strip()
+        if hist and os.path.isdir(hist):
+            run(["python3","append_hist_month.py",rolled,hist,os.path.join(WORK,"data.json")], WORK)
+        else:
+            print("  · (HIST_DIR no definido; no actualicé los Históricos con estrellas)")
+        src=os.environ.get("CIERRE_SRC","").strip()
+        if src and os.path.exists(src):
+            if empty_cierre(src): print("  · Cierre de Ventas vaciado (listo para el próximo mes).")
+        try: os.remove(cierre_src)
+        except: pass
 
 if __name__=="__main__":
     main()
