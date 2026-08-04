@@ -1,63 +1,82 @@
 #!/usr/bin/env python3
-# Orquestador del Visor GE. Reconstruye TODO desde los históricos (fuente de verdad),
-# proyecta el mes en curso con el Avance de Ventas y publica en GitHub Pages.
+# Orquestador del Visor GE — Opción 2 (autosuficiente).
+#
+# Fuente de meses CERRADOS: data_closed.json (en el repo). NO depende de los históricos.
+# El mes EN CURSO se proyecta desde el Avance de Ventas.
+#
+# AUTO-CONGELADO DE MES (rollover):
+#   - Cada corrida guarda en pending.json la "foto cruda" (sin proyectar) del mes en curso
+#     tomada del Avance (que es acumulado del mes).
+#   - Cuando el Avance "se reinicia" (su monto cae drásticamente respecto a la foto guardada),
+#     significa que el usuario ya pasó al mes siguiente -> se CONGELA la última foto (el mes que
+#     cerró) dentro de data_closed.json y se avanza al siguiente mes.  Sin intervención manual.
 #
 # Uso: python3 run.py [--dry] [--force]
-#   --dry   : construye index.html pero NO hace git push (para pruebas)
-#   --force : ignora el marcador de las 3 huellas (publica aunque no todo esté fresco)
-#
-# Diseño clave: NO se guarda un "data_closed.json" incremental. Cada corrida vuelve a leer
-# los históricos completos (ingest -> estrellas -> presupuesto/segmentación) y encima proyecta
-# el mes en curso. Así el cierre de mes es AUTOMÁTICO: en cuanto aparece una hoja nueva en el
-# histórico, ese mes pasa a "cerrado" (con estrellas recalculadas) y la proyección avanza al
-# siguiente mes. No hay estado que se corrompa.
 import os, sys, json, re, shutil, subprocess, calendar, hashlib, datetime
 import openpyxl
 
 ENGINE = os.path.dirname(os.path.abspath(__file__))
 REPO   = os.path.dirname(ENGINE)
-INPUTS = os.path.join(REPO, "inputs")      # xlsx descargados en runtime
+INPUTS = os.path.join(REPO, "inputs")
 WORK   = os.path.join(REPO, ".work")
-DRY    = "--dry"   in sys.argv
-FORCE  = "--force" in sys.argv
+DRY    = "--dry"       in sys.argv
+FORCE  = "--force"     in sys.argv
+NOPROJ = "--noproject" in sys.argv   # publica solo hasta el último mes cerrado (sin proyectar el mes en curso)
+AUTOFREEZE = "--autofreeze" in sys.argv  # activa el auto-congelado de mes (rollover). Off por defecto (en diseño).
+ROLL_DROP = 0.55   # si el monto del Avance cae por debajo de este % del guardado -> mes nuevo
 
-MES={'Ene':'01','Feb':'02','Mar':'03','Abr':'04','May':'05','Jun':'06',
-     'Jul':'07','Ago':'08','Sep':'09','Oct':'10','Nov':'11','Dic':'12'}
-def sheet_to_ym(name):
-    m=re.match(r'([A-Za-z]{3})\s?(\d{2})$', str(name).strip())
-    if not m or m.group(1).capitalize() not in MES: return None
-    return f"20{m.group(2)}-{MES[m.group(1).capitalize()]}"
+SHEET={'BA':'BA','WM':'WM','SC':'SMC'}
 
 def next_month(ym):
     y,m=map(int,ym.split('-')); m+=1
     if m>12: y+=1; m=1
     return f"{y:04d}-{m:02d}"
 
-def latest_hist_month():
-    wb=openpyxl.load_workbook(os.path.join(INPUTS,"Historico_WM.xlsx"), read_only=True)
-    yms=[sheet_to_ym(s) for s in wb.sheetnames]; yms=[y for y in yms if y]; wb.close()
-    return max(yms)
+def _to_int(v):
+    try: return int(v)
+    except: return None
+
+def avance_raw(path, stores):
+    """Foto CRUDA (factor 1) del Avance: agg y recs por tienda, sin proyectar."""
+    look={}
+    for s in stores:
+        cl=_to_int(s['clave']); look[(s['f'], cl if cl is not None else s['clave'])]=s['i']
+    wb=openpyxl.load_workbook(path, data_only=True, read_only=True)
+    agg={f:[0.0,0.0,0.0,0.0,0] for f in ['WM','BA','SC']}; recs=[]
+    for f,sh in SHEET.items():
+        for r in wb[sh].iter_rows(min_row=2, values_only=True):
+            cl=_to_int(r[0])
+            if cl is None: continue
+            si=look.get((f,cl))
+            if si is None: continue
+            venta=r[1] or 0; eleg=r[2] or 0; plan=r[3] or 0; ge=r[4] or 0
+            recs.append([si, round(venta,2), round(ge,2), round(plan,2), round(eleg,2)])
+            agg[f][0]+=venta; agg[f][1]+=ge; agg[f][2]+=plan; agg[f][3]+=eleg
+            if ge>0: agg[f][4]+=1
+    wb.close()
+    for f in agg: agg[f]=[round(agg[f][i],2) if i<4 else agg[f][4] for i in range(5)]
+    monto=sum(agg[f][0] for f in agg)
+    return {'agg':agg,'recs':recs,'monto':round(monto,2)}
 
 def fingerprint():
     wb=openpyxl.load_workbook(os.path.join(INPUTS,"Avance_Ventas.xlsx"), data_only=True, read_only=True)
     fp={}
-    for f,sh in {'BA':'BA','WM':'WM','SC':'SMC'}.items():
+    for f,sh in SHEET.items():
         ws=wb[sh]; s=0.0; n=0
         for r in ws.iter_rows(min_row=2, values_only=True):
-            if r[0] is None: continue
+            if _to_int(r[0]) is None: continue
             s+=(r[1] or 0)+(r[4] or 0); n+=1
         fp[f]=hashlib.md5(f"{n}:{round(s,2)}".encode()).hexdigest()[:12]
     wb.close(); return fp
 
-def load_state():
-    p=os.path.join(REPO,"state.json")
-    return json.load(open(p)) if os.path.exists(p) else {"published_date":"","fp":{},"hist":""}
+def jload(p, default): return json.load(open(p)) if os.path.exists(p) else default
+def load_state():   return jload(os.path.join(REPO,"state.json"),   {"published_date":"","fp":{}})
+def load_pending(): return jload(os.path.join(REPO,"pending.json"),  None)
 
 def run(cmd, cwd):
     r=subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
-    tag=" ".join(cmd)
     if r.returncode!=0:
-        print("ERROR en", tag); print(r.stdout); print(r.stderr); sys.exit(1)
+        print("ERROR en"," ".join(cmd)); print(r.stdout); print(r.stderr); sys.exit(1)
     last=[l for l in r.stdout.strip().splitlines() if l.strip()]
     if last: print("  ·", last[-1])
     return r.stdout
@@ -74,73 +93,93 @@ def build_index(work):
     open(os.path.join(work,"index.html"),"w",encoding="utf-8").write(out)
     return len(hashes)
 
+def freeze_into_closed(dc, month, snap):
+    """Agrega 'month' (con la foto cruda snap) como mes cerrado en data_closed."""
+    mi=len(dc['meta']['months'])
+    dc['meta']['months'].append(month)
+    for f in ['WM','BA','SC']:
+        a=snap['agg'][f]; dc['agg'][f].append([round(a[0]),round(a[1]),round(a[2]),round(a[3]),a[4]])
+    for si,venta,ge,plan,eleg in snap['recs']:
+        dc['recs'].append([si, mi, round(venta), round(ge), round(plan), round(eleg)])
+    return dc
+
 def main():
     today=datetime.date.today()
-    last_closed=latest_hist_month()            # última hoja del histórico = último mes CERRADO
-    cur_month=next_month(last_closed)           # el mes en curso es el SIGUIENTE
+    dcp=os.path.join(REPO,"data_closed.json")
+    dc=json.load(open(dcp)); stores=dc['stores']
+    last_closed=dc['meta']['months'][-1]
+    cur_month=next_month(last_closed)
+    rolled=None
+    if AUTOFREEZE:
+        snap=avance_raw(os.path.join(INPUTS,"Avance_Ventas.xlsx"), stores)  # foto cruda del Avance actual
+        pend=load_pending()
+        # ---- AUTO-CONGELADO: ¿el Avance se reinició (arrancó el mes siguiente)? ----
+        if pend and pend.get('month')==cur_month and pend.get('monto',0)>0 \
+           and 0 < snap['monto'] < pend['monto']*ROLL_DROP:
+            dc=freeze_into_closed(dc, cur_month, pend)      # congela el mes que cerró (foto previa)
+            json.dump(dc, open(dcp,"w"), ensure_ascii=False, separators=(',',':'))
+            rolled=cur_month; last_closed=cur_month; cur_month=next_month(cur_month); pend=None
+            print(f"↺ Cierre automático detectado: {rolled} congelado. Ahora en curso: {cur_month}.")
+        json.dump({'month':cur_month, **snap}, open(os.path.join(REPO,"pending.json"),"w"),
+                  ensure_ascii=False, separators=(',',':'))
+
     y,mn=map(int,cur_month.split('-')); dim=calendar.monthrange(y,mn)[1]
     this_cal=f"{today.year:04d}-{today.month:02d}"
-    if cur_month==this_cal: asof=min(today.day,dim)   # mes calendario en curso -> proyecta
-    else:                   asof=dim                  # mes ya transcurrido, aún sin hoja de cierre
+    asof=min(today.day,dim) if cur_month==this_cal else dim
     print(f"Último cierre: {last_closed} · mes en curso: {cur_month} · corte día {asof}/{dim}")
 
     st=load_state(); fp=fingerprint()
-    fresh={f: fp[f]!=st["fp"].get(f) for f in fp}
-    hist_changed=(last_closed!=st.get("hist",""))
+    fresh=all(fp[f]!=st["fp"].get(f) for f in fp)
     already=(st["published_date"]==today.isoformat())
     if not FORCE:
-        if already and not hist_changed:
-            print("Ya publiqué hoy y no hay cierre nuevo. Nada que hacer."); return
-        if not all(fresh.values()) and not hist_changed:
-            faltan=[f for f in fresh if not fresh[f]]
-            print(f"Aún no están frescos los 3 formatos (faltan: {faltan}). No publico todavía."); return
-    print("Cierre nuevo detectado." if hist_changed else "Marcador OK: los 3 formatos frescos.", "→ construyo y publico.")
+        if already and not rolled:
+            print("Ya publiqué hoy y no hubo cierre nuevo. Nada que hacer."); return
+        if not fresh and not rolled:
+            print("Aún no están frescos los 3 formatos. No publico todavía."); return
+    print(("Cierre nuevo → " if rolled else "Marcador OK → ")+"construyo y publico.")
 
-    # preparar working dir
     if os.path.exists(WORK): shutil.rmtree(WORK)
     os.makedirs(WORK)
     for fn in os.listdir(ENGINE):
         src=os.path.join(ENGINE,fn)
         if fn!="run.py" and os.path.isfile(src): shutil.copy(src, os.path.join(WORK,fn))
-    # inputs con los nombres que esperan los scripts
-    for src in ["Historico_WM.xlsx","Historico_BA.xlsx","Historico_SC.xlsx"]:
-        shutil.copy(os.path.join(INPUTS,src), os.path.join(WORK,src))
+    shutil.copy(dcp, os.path.join(WORK,"data.json"))                                    # base cerrada
     shutil.copy(os.path.join(INPUTS,"Avance_Ventas.xlsx"), os.path.join(WORK,"Avance_Ventas.xlsx"))
     shutil.copy(os.path.join(INPUTS,"Parametros.xlsx"),    os.path.join(WORK,"Parametros.xlsx"))
     shutil.copy(os.path.join(INPUTS,"Segmentacion.xlsx"),  os.path.join(WORK,"Segmentacion_usuario.xlsx"))
-    # librerías donde build_visor las busca
     for pkg,fn in [("chart.js","chart.umd.min.js"),("xlsx","xlsx.full.min.js")]:
         d=os.path.join(WORK,"node_modules",pkg,"dist"); os.makedirs(d, exist_ok=True)
         shutil.copy(os.path.join(WORK,fn), os.path.join(d,fn))
 
     print("Pipeline:")
-    run(["python3","ingest.py",".","data.json"], WORK)              # 1) históricos cerrados -> data.json
-    run(["python3","read_params.py","Parametros.xlsx"], WORK)       # 2) parámetros (fuente de verdad)
-    run(["python3","stars.py","data.json","params.json"], WORK)     # 3) estrellas (sobre meses cerrados)
-    run(["python3","recompute_all.py"], WORK)                       # 4) presupuesto + segmentación
-    run(["python3","daily_update.py",cur_month,str(asof)], WORK)    # 5) proyección del mes en curso
-    run(["python3","build_visor.py"], WORK)                         # 6) visor autocontenido
-    nusers=build_index(WORK)                                        # 7) + gate de acceso
+    run(["python3","read_params.py","Parametros.xlsx"], WORK)      # parámetros (fuente de verdad)
+    run(["python3","stars.py","data.json","params.json"], WORK)    # estrellas (meses cerrados)
+    run(["python3","recompute_all.py"], WORK)                      # presupuesto + segmentación
+    if NOPROJ:
+        print("  · [--noproject] sin proyección; visor hasta el último mes cerrado")
+    else:
+        run(["python3","daily_update.py",cur_month,str(asof)], WORK)   # proyección del mes en curso
+    run(["python3","build_visor.py"], WORK)
+    nusers=build_index(WORK)
     print(f"  · index.html armado · {nusers} usuarios en el gate")
 
-    # publicar
     shutil.copy(os.path.join(WORK,"index.html"), os.path.join(REPO,"index.html"))
-    st={"published_date":today.isoformat(),"fp":fp,"hist":last_closed,"cur_month":cur_month,"asof":asof}
+    st={"published_date":today.isoformat(),"fp":fp,"last_closed":last_closed,"cur_month":cur_month,"asof":asof}
     json.dump(st, open(os.path.join(REPO,"state.json"),"w"), ensure_ascii=False, indent=1)
     if DRY:
         print("[--dry] index.html actualizado. No hago git push."); return
-    run(["git","add","index.html","state.json"], REPO)
+    addf=["index.html","state.json","data_closed.json"]+(["pending.json"] if os.path.exists(os.path.join(REPO,"pending.json")) else [])
+    run(["git","add",*addf], REPO)
     run(["git","-c","user.name=Visor GE Bot","-c","user.email=ReyMon63@users.noreply.github.com",
-         "commit","-q","-m",f"Actualización · {cur_month} corte {asof}/{dim}"], REPO)
+         "commit","-q","-m",f"Actualización · {cur_month} corte {asof}/{dim}"+(f" · cerró {rolled}" if rolled else "")], REPO)
     tok=os.environ.get("VISOR_GH_TOKEN","").strip()
     if not tok:
         for p in ("~/.gh_token", os.path.join(REPO,".gh_token")):
             p=os.path.expanduser(p)
             if os.path.exists(p): tok=open(p).read().strip(); break
     if not tok:
-        print("No hay token de GitHub (VISOR_GH_TOKEN o ~/.gh_token). index.html quedó armado pero no lo publiqué."); return
-    url=f"https://x-access-token:{tok}@github.com/ReyMon63/Dashboard.git"
-    run(["git","push",url,"main"], REPO)
+        print("No hay token de GitHub. index.html quedó armado pero no lo publiqué."); return
+    run(["git","push",f"https://x-access-token:{tok}@github.com/ReyMon63/Dashboard.git","main"], REPO)
     print("Publicado en GitHub Pages.")
 
 if __name__=="__main__":
