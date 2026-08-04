@@ -1,11 +1,11 @@
 {
  "published_date": "2026-08-04",
  "fp": {
-  "BA": "b10c7a785179",
-  "WM": "55167a875f72",
-  "SC": "7fca621a9085"
+  "BA": "c0db48a7a905",
+  "WM": "b1d607cb6595",
+  "SC": "8cb71bb1679c"
  },
- "hist": "2026-06",
- "cur_month": "2026-07",
- "asof": 31
+ "last_closed": "2026-07",
+ "cur_month": "2026-08",
+ "asof": 4
 }
