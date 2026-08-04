@@ -589,7 +589,7 @@ function recos(neg){return neg.slice().sort((a,b)=>RECPRIO.indexOf(a.key)-RECPRI
 function renderExec(){
   const mi=state.mi;const f=state.formato;const sc=scopeInfo();const base=state.base;
   const d=diagFor(f,mi);
-  document.getElementById('execPh').textContent=sc.short+' · cierre de '+mlabel(mi);
+  document.getElementById('execPh').textContent=sc.short+' · '+mlabel(mi);
   const chip=document.getElementById('execChip');
   chip.className='chip '+(d.st?d.st.k:'na');chip.textContent=d.st?d.st.t:'—';
   const subj=cap(sc.subj);
