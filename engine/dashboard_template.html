@@ -705,12 +705,20 @@ function renderTrend(){
   const lg=document.getElementById('trendLegend');lg.innerHTML=ds.map(d=>`<span><span class="dot" style="background:${d.borderColor}"></span>${d.label}</span>`).join('');
   document.getElementById('trendPh').textContent=({monto:'Monto GE en pesos',cant:'Piezas de GE',conv:'Conversión (GE ÷ elegibles)',alc:'Alcance de plan (GE ÷ presupuesto)',ticket:'Ticket promedio por GE'})[key]+' · '+ (show.length>1?'por formato':(FNAME[show[0]]||'—'));
 }
+// Ajusta la rejilla tendencia/pastel ANTES de dibujar, para que la de tendencia
+// nazca con el ancho correcto (evita que quede expandida y el pastel se salga del cuadro).
+function applyPieLayout(){
+  const show=formatsInScope().length>=2;
+  const panel=document.getElementById('piePanel'),grid=document.getElementById('gridTrendPie');
+  if(panel)panel.style.display=show?'':'none';
+  if(grid)grid.style.gridTemplateColumns=show?'':'1fr';
+  return show;
+}
+function fitTrendPie(){requestAnimationFrame(()=>requestAnimationFrame(()=>{ if(chTrend)chTrend.resize(); if(chPie)chPie.resize(); }));}
 function renderPie(){
   const mi=state.mi;const fmts=formatsInScope();
   // el pastel solo tiene sentido si hay más de un formato en la selección
-  const panel=document.getElementById('piePanel'),grid=document.getElementById('gridTrendPie');
-  if(fmts.length<2){ if(chPie){chPie.destroy();chPie=null;} if(panel)panel.style.display='none'; if(grid)grid.style.gridTemplateColumns='1fr'; requestAnimationFrame(()=>{if(chTrend)chTrend.resize();}); return; }
-  if(panel)panel.style.display=''; if(grid)grid.style.gridTemplateColumns='';
+  if(fmts.length<2){ if(chPie){chPie.destroy();chPie=null;} fitTrendPie(); return; }
   const montos=fmts.map(f=>metricsFrom(aggAt(f,mi)).monto);
   const total=montos.reduce((a,b)=>a+b,0)||1;
   if(chPie)chPie.destroy();
@@ -721,8 +729,7 @@ function renderPie(){
         callbacks:{label:c=>c.label+': '+fMoneyFull(c.parsed)+' ('+(c.parsed/total*100).toFixed(0)+'%)'}}}}});
   document.getElementById('piePh').textContent='Participación del monto GE · '+mlabel(mi);
   document.getElementById('pieLegend').innerHTML=fmts.map((f,i)=>`<span><span class="dot" style="background:${css(FCOL[f])}"></span>${FNAME[f]} ${(montos[i]/total*100).toFixed(0)}% · ${fMoney(montos[i])}</span>`).join('');
-  // tras restablecer la rejilla, reajustar ambas gráficas al encuadre correcto
-  requestAnimationFrame(()=>{ if(chTrend)chTrend.resize(); if(chPie)chPie.resize(); });
+  fitTrendPie();
 }
 function renderYoY(){
   const key=state.yoy, f=state.formato;
@@ -1095,7 +1102,7 @@ function renderStore(s){
 /* ============ wiring ============ */
 function seg(id,cb){document.querySelectorAll('#'+id+' button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('active'));b.classList.add('active');cb(b.dataset.v);});}
-function refreshAll(){updProjBanner();renderExec();renderKPIs();renderTrend();renderPie();renderYoY();renderOpp();renderStars();renderBudget();renderSug();renderRank();updateDownloadBtns();}
+function refreshAll(){updProjBanner();renderExec();renderKPIs();applyPieLayout();renderTrend();renderPie();renderYoY();renderOpp();renderStars();renderBudget();renderSug();renderRank();updateDownloadBtns();}
 function initMonths(){const s=document.getElementById('selMonth');s.innerHTML=MONTHS.map((m,i)=>`<option value="${i}" ${i===NM-1?'selected':''}>${mlabel(i)}</option>`).join('');
   s.onchange=()=>{state.mi=+s.value;refreshAll();};}
 seg('segFormato',v=>{state.formato=v;refreshAll();});
