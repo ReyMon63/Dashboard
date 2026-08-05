@@ -504,7 +504,7 @@ datalist{color:#000}
       <button class="iconbtn xls" data-x="WM">⬇︎ Walmart</button>
       <button class="iconbtn xls" data-x="BA">⬇︎ Bodega Aurrerá</button>
       <button class="iconbtn xls" data-x="SC">⬇︎ Sam's Club</button>
-      <button class="iconbtn xls" data-x="ALL" style="font-weight:600">⬇︎ Los 3 formatos</button>
+      <button class="iconbtn xls" data-x="ALL" style="font-weight:600">⬇︎ Todos Juntos</button>
       <span class="hint" id="sugStatus"></span>
     </div>
     <div style="margin-bottom:8px"><button class="toggle-list" id="tglSug">▸ Ver detalle por tienda</button></div>
@@ -1007,7 +1007,7 @@ function renderSug(){
   const floorTxt=`Walmart ${p.floor.WM} · Bodega ${p.floor.BA} · Sam's ${p.floor.SC}`;
   document.getElementById('sugSubtitle').innerHTML = `Meta = <strong>venta real 2025 × ${gPct}%</strong> de crecimiento, repartida por la <strong>estacionalidad propia de cada tienda</strong> (suavizada) con empuje extra solo en <strong>mayo (HotSale)</strong> y <strong>noviembre (Buen Fin)</strong>, y con un <strong>piso mínimo por formato</strong> (${floorTxt} GE/año).`;
   const box=document.getElementById('sugSummary');box.innerHTML='';
-  ['WM','BA','SC'].forEach(f=>{
+  formatsInScope().forEach(f=>{
     const rows=normBud(f);let cur=0,sug=0,fl=0;rows.forEach(r=>{cur+=r.cur;sug+=r.sug;if(r.sug<=p.floor[f]+0.5)fl++;});
     const d=cur?((sug-cur)/cur):0;
     box.innerHTML+=`<div class="oppc"><div class="olb"><span class="fbadge" style="background:${css(FCOL[f])}"></span>${FNAME[f]} · piso ${p.floor[f]}/año</div>
@@ -1028,7 +1028,8 @@ function renderPayability(){
   html+='<div class="ph" style="margin-bottom:10px">El <strong>%</strong> es la proporción de tiendas activas que cobrarían con la <strong>meta nueva</strong> (alcanzando su meta de GE <strong>o</strong> la conversión objetivo: WM 20% · BA 7% · SC 15%). El «<strong>vs anterior</strong>» es cuántas cobraban con el <strong>presupuesto actual</strong>.</div>';
   html+='<div style="display:flex;gap:20px;flex-wrap:wrap">';
   let TP=0,TPc=0,TT=0;
-  ['WM','BA','SC'].forEach(f=>{
+  const scopeF=formatsInScope();
+  scopeF.forEach(f=>{
     const rows=normBud(f);let paid=0,paidCur=0,tot=0;
     rows.forEach(r=>{if(r.pz<=0)return;tot++;const hitConv=r.conv>=ct[f];
       if((r.sug>0&&r.pz>=r.sug)||hitConv)paid++;
@@ -1041,10 +1042,12 @@ function renderPayability(){
       <div style="font-size:12.5px;margin-top:3px"><strong>${fInt(paid)}</strong> tiendas <span style="color:var(--muted)">vs ${fInt(paidCur)} anterior</span> <span class="${d>=0?'up':'down'}" style="font-weight:700">${d>=0?'+':''}${fInt(d)}</span></div></div>`;
   });
   const tot=TT?TP/TT:0;const dG=TP-TPc;
+  if(scopeF.length>1){
   html+=`<div style="min-width:150px;border-left:1px solid var(--grid);padding-left:16px"><div style="font-size:11px;color:var(--muted);font-weight:600">GRUPO</div>
       <div style="font-size:22px;font-weight:700">${fPct(tot)}</div>
       <div class="ph" style="font-size:10.5px">cobran con meta nueva · de ${fInt(TT)} activas</div>
       <div style="font-size:12.5px;margin-top:3px"><strong>${fInt(TP)}</strong> tiendas <span style="color:var(--muted)">vs ${fInt(TPc)} anterior</span> <span class="${dG>=0?'up':'down'}" style="font-weight:700">${dG>=0?'+':''}${fInt(dG)}</span></div></div>`;
+  }
   html+='</div>';
   html+=`<div class="ph" style="margin-top:10px;line-height:1.55">Lectura: con la meta «Histórico Suavizado» cobrarían <strong>${fInt(TP)}</strong> de ${fInt(TT)} tiendas activas (<strong>${fPct(tot)}</strong>), <strong>${dG>=0?fInt(dG)+' más':fInt(-dG)+' menos'}</strong> que con el presupuesto actual. El % está calculado sobre la venta real de 12 meses vs. la meta (que pide +${(BUD3.params.growth*100).toFixed(0)}% de crecimiento); la exigencia se ajusta en <em>Parámetros Base</em>.</div>`;
   html+='</div>';
