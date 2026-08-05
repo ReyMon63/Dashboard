@@ -967,6 +967,7 @@ const MES12=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','
 const BUD=DB.budget||{}, BUD2=DB.budget2||{}, BUD3=DB.budget3, STARS=DB.stars;
 const STAR_COL=['#c3c2b7','#cde2fb','#86b6ef','#3987e5','#1c5cab','#0d366b'];
 const CRIT=['Vendió ≥12 GE (12m)','No decreció vs. año previo','Cumplió la suma de sus metas','Cumplió meta en 10 meses','≥80% de conversión objetivo'];
+const CRITSHORT=['≥12 GE','Sin Decremento','≥Meta Anual','10 meses','Conversión'];
 function critAt(si,mi){const a=DB.stars.crit&&DB.stars.crit[String(si)];if(!a)return -1;const k=mi-STARS.start_idx;return(k>=0&&k<a.length)?a[k]:-1;}
 const PROXNAME=['Venta mínima','Crecimiento','Meta','Regularidad','Penetración'];
 function proximaJS(si,mi){
@@ -1233,16 +1234,21 @@ function storeHistory(si){const h=[];for(let mi=0;mi<NM;mi++)h.push(null);
 function renderStore(s){
   const res=document.getElementById('storeResult');res.classList.add('on');
   document.getElementById('storeName').textContent=(s.n||'(sin nombre)');
-  const stv=starAt(s.i,state.mi);const prov=state.mi<STARS.dic25_idx;const mask=critAt(s.i,state.mi);
+  // Las estrellas existen solo para meses CERRADOS; si el mes visible es el proyectado,
+  // se toman las del último mes cerrado para no perder el desglose de la tienda.
+  const projMi=(DB.meta.projected&&typeof DB.meta.projected.mi==='number')?DB.meta.projected.mi:null;
+  const LAST_STAR_MI=(projMi!=null)?Math.min(projMi-1,NM-1):NM-1;
+  const smi=Math.min(state.mi,LAST_STAR_MI);
+  const stv=starAt(s.i,smi);const prov=smi<STARS.dic25_idx;const mask=critAt(s.i,smi);
   const starHtml=stv<0?'':` · <span style="font-weight:700">${starGlyphs(stv)} ${stv}/5</span>`;
-  document.getElementById('storeMeta').innerHTML=`Formato ${FNAME[s.f]} · Clave ${s.clave}${starHtml} · al cierre de ${mlabel(state.mi)}`;
+  document.getElementById('storeMeta').innerHTML=`Formato ${FNAME[s.f]} · Clave ${s.clave}${starHtml} · estrellas al cierre de ${mlabel(smi)}`;
   const chk=document.getElementById('storeCrit');
   if(mask<0||stv<0){chk.innerHTML='';}
-  else{chk.innerHTML='<div style="font-size:12px;line-height:1.9;margin-top:2px">'+CRIT.map((c,i)=>{
+  else{chk.innerHTML='<div style="font-size:12px;line-height:1.9;margin-top:2px">'+CRITSHORT.map((c,i)=>{
     const pend=prov&&i===1;const ok=(mask>>i)&1;
     const ic=pend?'<span style="color:var(--muted)">◔</span>':ok?'<span style="color:var(--good-ink)">✓</span>':'<span style="color:var(--bad)">✗</span>';
-    return `<span style="display:inline-flex;align-items:center;gap:6px;margin-right:16px">${ic} ${c}${pend?' <span style="color:var(--muted)">(pendiente)</span>':''}</span>`;}).join('')+'</div>';}
-  const px=document.getElementById('storeProx');const pr=(stv<0)?null:proximaJS(s.i,state.mi);
+    return `<span title="${PROXNAME[i]}: ${CRIT[i]}" style="display:inline-flex;align-items:center;gap:6px;margin-right:16px">${ic} ${c}${pend?' <span style="color:var(--muted)">(pendiente)</span>':''}</span>`;}).join('')+'</div>';}
+  const px=document.getElementById('storeProx');const pr=(stv<0)?null:proximaJS(s.i,smi);
   if(!pr){px.innerHTML='';}
   else if(pr.max){px.innerHTML='<div style="font-size:12.5px;background:rgba(12,163,12,.10);border:1px solid var(--border);border-radius:8px;padding:8px 11px;display:inline-block">⭐ <strong>Nivel máximo (5★)</strong> — mantener los 5 logros</div>';}
   else{px.innerHTML=`<div style="font-size:12.5px;background:var(--chip);border:1px solid var(--border);border-radius:8px;padding:8px 11px;display:inline-block">🎯 Próxima estrella: <strong>${pr.name}</strong> — ${pr.how}</div>`;}
