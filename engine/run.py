@@ -164,7 +164,14 @@ def main():
 
     y,mn=map(int,cur_month.split('-')); dim=calendar.monthrange(y,mn)[1]
     this_cal=f"{today.year:04d}-{today.month:02d}"
-    asof=min(today.day,dim) if cur_month==this_cal else dim
+    # Los avances reportan el acumulado HASTA AYER (el día de hoy aún no cierra),
+    # así que los días con datos del mes = hoy - 1. En meses ya pasados, asof = dim.
+    if cur_month==this_cal:
+        asof=today.day-1
+    else:
+        asof=dim
+    noproj=NOPROJ or asof<1     # día 1 del mes: aún no hay días con datos -> no proyectar
+    if asof<1: asof=dim
     print(f"Último cierre: {last_closed} · mes en curso: {cur_month} · corte día {asof}/{dim}")
 
     st=load_state(); fp=fingerprint()
@@ -194,8 +201,8 @@ def main():
     run(["python3","read_params.py","Parametros.xlsx"], WORK)      # parámetros (fuente de verdad)
     run(["python3","stars.py","data.json","params.json"], WORK)    # estrellas (meses cerrados)
     run(["python3","recompute_all.py"], WORK)                      # presupuesto + segmentación
-    if NOPROJ:
-        print("  · [--noproject] sin proyección; visor hasta el último mes cerrado")
+    if noproj:
+        print("  · sin proyección; visor hasta el último mes cerrado")
     else:
         run(["python3","daily_update.py",cur_month,str(asof)], WORK)   # proyección del mes en curso
     run(["python3","build_visor.py"], WORK)
