@@ -862,8 +862,16 @@ function renderSug(){
       <div class="od">Actual: ${fInt(cur)} pzs · <span class="${d>=0?'up':'down'}" style="font-weight:700">${d>=0?'+':''}${(d*100).toFixed(0)}%</span> · ${fInt(rows.length)} tiendas · ${fInt(fl)} en el piso</div></div>`;
   });
   renderPayability();
+  // Cadencia del piso como "X GE cada Y días" con enteros chicos (aprox. al piso anual)
+  function cadFloor(fv){const rate=fv/365;let b={x:1,y:Math.max(1,Math.round(1/rate)),rel:1e9};
+    for(let x=1;x<=6;x++){const y=Math.round(x/rate);if(y<1)continue;const rel=Math.abs(x/y-rate)/rate;
+      if(rel<b.rel)b={x,y,rel};if(rel<=0.03)break;}
+    return b.x+' GE cada '+b.y+' día'+(b.y>1?'s':'');}
+  const MESN=['','enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const EVLAB={5:'HotSale',11:'Buen Fin'};
+  const evText=(p.event_months||[5,11]).map(m=>MESN[m]+(EVLAB[m]?' ('+EVLAB[m]+')':'')).join(' y ');
   document.getElementById('sugMethod').innerHTML =
-    `<strong>Cómo se construye la meta «Histórico Suavizado»:</strong> se parte de la <em>venta real de cada tienda en 2025</em> y se le pide un crecimiento del <strong>${gPct}%</strong> para 2026. Ese total anual se reparte mes a mes con la <em>estacionalidad propia de la tienda pero suavizada</em> (mezcla al ${(p.alpha*100).toFixed(0)}% su curva individual con la curva del formato), para que la meta sea <strong>estable y no dé saltos bruscos</strong> mes con mes. Se añade crecimiento explícito solo en los <strong>dos picos reales del año: mayo (HotSale) y noviembre (Buen Fin)</strong>. Por último, ninguna meta queda por debajo del <strong>piso mínimo del formato</strong> (equivalente a vender 1 GE cada 5 días en Bodega, cada 3 en Sam's y cada 2.5 en Walmart), para no fijar metas «blandas». La meta se define <strong>una sola vez al inicio del año</strong> y no se sube cuando la tienda cumple. Todos estos parámetros viven en el archivo <em>Parámetros Base</em>.`;
+    `<strong>Cómo se construye la meta «Histórico Suavizado»:</strong> se parte de la <em>venta real de cada tienda en 2025</em> y se le pide un crecimiento del <strong>${gPct}%</strong> para 2026. Ese total anual se reparte mes a mes con la <em>estacionalidad propia de la tienda pero suavizada</em> (mezcla al ${(p.alpha*100).toFixed(0)}% su curva individual con la curva del formato), para que la meta sea <strong>estable y no dé saltos bruscos</strong> mes con mes. Se añade crecimiento explícito solo en los <strong>picos reales del año: ${evText}</strong>. Por último, ninguna meta queda por debajo del <strong>piso mínimo del formato</strong> (Bodega <strong>${p.floor.BA}</strong>, Sam's <strong>${p.floor.SC}</strong> y Walmart <strong>${p.floor.WM}</strong> GE al año — equivalente a <strong>${cadFloor(p.floor.BA)}</strong> en Bodega, <strong>${cadFloor(p.floor.SC)}</strong> en Sam's y <strong>${cadFloor(p.floor.WM)}</strong> en Walmart), para no fijar metas «blandas». La meta se define <strong>una sola vez al inicio del año</strong> y no se sube cuando la tienda cumple. Todos estos parámetros viven en el archivo <em>Parámetros Base</em>.`;
   renderSugPreview();
 }
 function renderPayability(){
