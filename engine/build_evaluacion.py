@@ -25,6 +25,7 @@ mi     = (proj["mi"] - 1) if proj else len(months) - 1      # ultimo mes CERRADO
 MES = {"01":"Ene","02":"Feb","03":"Mar","04":"Abr","05":"May","06":"Jun",
        "07":"Jul","08":"Ago","09":"Sep","10":"Oct","11":"Nov","12":"Dic"}
 y, m = months[mi].split("-"); LABEL = MES[m] + y[2:]
+MESES_RESTANTES = 12 - int(m)    # meses que quedan en el año calendario tras el último cierre
 
 S = DB["stars"]; START = S["start_idx"]; DIC25 = S["dic25_idx"]; crit = S["crit"]
 stores = DB["stores"]
@@ -43,7 +44,7 @@ def critbits(si, mm):
     if k < 0 or k >= len(a) or a[k] < 0: return None
     return [(a[k] >> i) & 1 for i in range(5)]
 
-PROXNAME = ["Venta mínima", "Crecimiento", "Meta", "Regularidad", "Penetración"]
+PROXNAME = ["Vende", "Crece", "Cumple", "Constancia", "Eficiencia"]
 
 def proxima(si, mm):
     f = byidx[si]["f"]; H = hist.get(si, {})
@@ -65,15 +66,22 @@ def proxima(si, mm):
     qNow = S3(mm - 2, mm); qPrev = S3(mm - 14, mm - 12)
     prevpres = any(r(i) for i in range(mm - 14, mm - 11))
     isnew = not prevpres
+    mr = MESES_RESTANTES  # meses que quedan en el año calendario
+    sfx_mr = f"(restan {mr} mes{'es' if mr != 1 else ''} del año)"
     cands = []
-    if ca < 12: cands.append((ca/12, 0, f"Vender {math.ceil(12-ca)} GE más en 12 meses"))
+    if ca < 12:
+        cands.append((ca/12, 0, f"Vender {math.ceil(12-ca)} GE más acumulados en los próximos 12 meses"))
     if mm >= DIC25 and not isnew and qPrev > 0 and qNow < qPrev:
-        cands.append((qNow/qPrev, 1, f"Vender {math.ceil(qPrev-qNow)} GE más en el últ. trimestre vs. año previo"))
+        cands.append((qNow/qPrev, 1, f"Vender {math.ceil(qPrev-qNow)} GE más este trimestre vs. mismo trimestre del año anterior"))
     if not (me > 0 and ca >= me):
-        cands.append(((ca/me) if me else 0, 2, f"Vender {math.ceil(max(0, me-ca))} GE más para cumplir su meta acumulada"))
-    if hits < 10: cands.append((hits/10, 3, f"Cumplir meta en {10-hits} mes(es) más"))
+        cands.append(((ca/me) if me else 0, 2,
+            f"Vender {math.ceil(max(0, me-ca))} GE más para cubrir la meta anual acumulada {sfx_mr}"))
+    if hits < 10:
+        cands.append((hits/10, 3,
+            f"Cumplir la meta mensual en {10-hits} mes(es) más de los {mr} que quedan del año"))
     if not (el > 0 and conv >= thr):
-        cands.append(((conv/thr) if thr > 0 else 0, 4, f"Subir conversión a {thr*100:.1f}% (hoy {conv*100:.1f}%)"))
+        cands.append(((conv/thr) if thr > 0 else 0, 4,
+            f"Subir conversión de {conv*100:.1f}% a {thr*100:.1f}% antes de cerrar {LABEL}"))
     if not cands: return {"max": True}
     cands.sort(key=lambda x: -x[0])
     return {"name": PROXNAME[cands[0][1]], "how": cands[0][2]}
@@ -83,7 +91,7 @@ hf = Font(bold=True, color="FFFFFF"); hfill = PatternFill("solid", fgColor="1F4E
 ctr = Alignment(horizontal="center", vertical="center"); lft = Alignment(horizontal="left", vertical="center")
 OKF = Font(color="1E7B34", bold=True); NOF = Font(color="C0392B", bold=True)
 FNAME = {"WM": "Walmart", "BA": "Bodega Aurrerá", "SC": "Sam's Club"}
-SHORT = ["≥12 GE", "Sin Decremento", "≥Meta Anual", "10 meses", "Conversión"]
+SHORT = ["Vende", "Crece", "Cumple", "Constancia", "Eficiencia"]
 HDR = ["Determinante", "Tienda", "Nivel"] + SHORT + ["Próxima estrella", "Cómo lograrla"]
 
 wb = openpyxl.Workbook(); wb.remove(wb.active)
@@ -125,11 +133,11 @@ lg = wb.create_sheet("Leyenda")
 rows = [
     [f"Evaluación de tiendas · nivel de estrellas y acciones · al cierre de {LABEL}"], [],
     ["Criterio (columna)", "Qué significa"],
-    ["≥12 GE", "Venta mínima: vendió ≥12 GE en los últimos 12 meses"],
-    ["Sin Decremento", "Crecimiento: no decreció vs. el mismo periodo del año previo"],
-    ["≥Meta Anual", "Meta: cumplió la suma de sus metas de 12 meses"],
-    ["10 meses", "Regularidad: cumplió su meta en al menos 10 meses"],
-    ["Conversión", "Penetración: ≥80% de la conversión objetivo (WM 20% · BA 7% · SC 15%)"],
+    ["Vende",      "Vendió ≥12 GE acumuladas en los últimos 12 meses"],
+    ["Crece",      "No decreció vs. el mismo período del año previo"],
+    ["Cumple",     "Cumplió la suma de sus metas de los últimos 12 meses"],
+    ["Constancia", "Cumplió su meta mensual en al menos 10 de los últimos 12 meses"],
+    ["Eficiencia", "≥80% de la conversión objetivo (WM 20% · BA 7% · SC 15%)"],
     [],
     ["✓", "Cumple el criterio"],
     ["✗", "No lo cumple"],
@@ -147,3 +155,47 @@ lg.column_dimensions["A"].width = 18; lg.column_dimensions["B"].width = 80
 
 wb.save(OUT)
 print(f"Listo · {OUT} · mes {LABEL}")
+
+# ---------- subir a Google Drive ----------
+EVAL_DRIVE_ID = "1BPuuY5J0sAxl7eatSbejcSK-NbpDb13A"
+BOT_TOKEN_PATH = "/Users/reymon/Desktop/Proyectos/avance_ventas_bot/token.json"
+BOT_CRED_PATH  = "/Users/reymon/Desktop/Proyectos/avance_ventas_bot/credentials.json"
+
+def subir_evaluacion(xlsx_path, file_id, token_path, cred_path):
+    try:
+        import json as _json
+        from google.oauth2.credentials import Credentials
+        from google.auth.transport.requests import Request
+        from googleapiclient.discovery import build
+        from googleapiclient.http import MediaFileUpload
+        with open(token_path)  as f: tok = _json.load(f)
+        with open(cred_path)   as f: ins = _json.load(f).get("installed", {})
+        creds = Credentials(
+            token=tok.get("token"),
+            refresh_token=tok.get("refresh_token"),
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=ins.get("client_id"),
+            client_secret=ins.get("client_secret"),
+            scopes=tok.get("scopes", ["https://www.googleapis.com/auth/drive.file"])
+        )
+        if creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+            # guardar token renovado
+            tok_data = {
+                "token": creds.token, "refresh_token": creds.refresh_token,
+                "token_uri": creds.token_uri, "client_id": creds.client_id,
+                "client_secret": creds.client_secret, "scopes": list(creds.scopes or [])
+            }
+            with open(token_path, "w") as f: _json.dump(tok_data, f, indent=2)
+        svc   = build("drive", "v3", credentials=creds)
+        media = MediaFileUpload(
+            xlsx_path,
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            resumable=True
+        )
+        result = svc.files().update(fileId=file_id, media_body=media).execute()
+        print(f"Drive OK · id={result.get('id')}")
+    except Exception as e:
+        print(f"Drive upload omitido: {e}")
+
+subir_evaluacion(OUT, EVAL_DRIVE_ID, BOT_TOKEN_PATH, BOT_CRED_PATH)

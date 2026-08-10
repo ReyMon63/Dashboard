@@ -200,6 +200,7 @@ def main():
     print("Pipeline:")
     run(["python3","read_params.py","Parametros.xlsx"], WORK)      # parámetros (fuente de verdad)
     run(["python3","stars.py","data.json","params.json"], WORK)    # estrellas (meses cerrados)
+    run(["python3","build_evaluacion.py","data.json","params.json","Evaluacion_Tiendas.xlsx"], WORK)  # evaluación + Drive
     run(["python3","recompute_all.py"], WORK)                      # presupuesto + segmentación
     if noproj:
         print("  · sin proyección; visor hasta el último mes cerrado")
