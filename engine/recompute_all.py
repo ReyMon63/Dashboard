@@ -15,7 +15,8 @@ DIC25=months.index('2025-12')
 Y2025={m:months.index(f'2025-{m:02d}') for m in range(1,13)}
 G=P['growth']; ALPHA=P['alpha']; EVENT=set(P['event_months']); FLOOR=P['floor']; CONV=P['conv_target']
 NORMAL=[m for m in range(1,13) if m not in EVENT]
-TR=range(NM-12,NM)   # últimos 12 meses
+TR=range(NM-12,NM)   # últimos 12 meses (ventana móvil = base del presupuesto)
+TRcal={calm(mi):mi for mi in TR}   # mes-calendario (1..12) -> índice dentro de la ventana de 12m
 
 # estacionalidad de formato (meses normales)
 fs=defaultdict(lambda:defaultdict(list))
@@ -39,7 +40,7 @@ def store_w(si):
     s=sum(w.values()); return {m:w[m]/s for m in NORMAL}
 def v3(si):
     f=fmt(si); tier=starAt(si,DIC25); tier=1 if tier<0 else tier
-    a={m:(byS[si][Y2025[m]][1] if Y2025[m] in byS[si] else 0) for m in range(1,13)}
+    a={m:(byS[si][TRcal[m]][1] if TRcal[m] in byS[si] else 0) for m in range(1,13)}   # base: ventana 12m móvil
     out={m:a[m]*(1+G) for m in EVENT}
     base_norm=sum(a[m] for m in NORMAL)*(1+G); w=store_w(si)
     for m in NORMAL: out[m]=base_norm*w[m]
@@ -52,7 +53,8 @@ budget3={'params':{'growth':G,'alpha':ALPHA,'event':sorted(EVENT),'floor':FLOOR,
 for si in byS:
     f=fmt(si)
     v2025=sum(byS[si][Y2025[m]][1] for m in range(1,13) if Y2025[m] in byS[si])
-    if v2025<=0: continue
+    base12=sum(byS[si][TRcal[m]][1] for m in range(1,13) if TRcal[m] in byS[si])
+    if base12<=0: continue   # incluye tiendas nuevas (con venta en los últimos 12m aunque no en 2025)
     el=sum(byS[si][x][3] for x in TR if x in byS[si])
     pz=sum(byS[si][x][1] for x in TR if x in byS[si])
     cur=sum((byS[si][x][2] or 0) for x in TR if x in byS[si])
