@@ -44,9 +44,8 @@ def v3(si):
     out={m:a[m]*(1+G) for m in EVENT}
     base_norm=sum(a[m] for m in NORMAL)*(1+G); w=store_w(si)
     for m in NORMAL: out[m]=base_norm*w[m]
-    ann=sum(out.values()); floor=FLOOR[f]
-    if 0<ann<floor: k=floor/ann; out={m:out[m]*k for m in out}
-    elif ann==0: out={m:floor/12 for m in range(1,13)}
+    mmin=FLOOR[f]//12   # mínimo MENSUAL = piso anual / 12, entero truncado
+    out={m:max(out[m],mmin) for m in range(1,13)}   # ningún mes por debajo del mínimo mensual
     return out,tier
 
 budget3={'params':{'growth':G,'alpha':ALPHA,'event':sorted(EVENT),'floor':FLOOR,'conv_target':CONV},'stores':{'WM':[],'BA':[],'SC':[]}}
