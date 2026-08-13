@@ -1073,11 +1073,12 @@ function renderSugPreview(){
   const f=state.formato==='ALL'?'ALL':state.formato;
   let rows=allBud(f).map(r=>({r,delta:r.sug-r.cur}));
   rows.sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));rows=rows.slice(0,15);
-  let h=`<thead><tr><th class="l">Tienda</th><th class="l">Fmt</th><th>Nivel</th><th>Clave</th><th>Eleg 12m</th><th>Piezas 12m</th><th>Conv. actual</th><th>Meta anual ACTUAL</th><th>Meta anual SUGERIDA</th><th>Δ pzs</th><th>Δ%</th></tr></thead><tbody>`;
-  rows.forEach(({r,delta})=>{const s=storeByIdx[r.si];const dp=r.cur?delta/r.cur:0;const st=starAt(r.si,state.mi);
+  let h=`<thead><tr><th class="l">Tienda</th><th class="l">Fmt</th><th>Clave</th><th>Eleg 12m</th><th>Piezas 12m</th><th>Conv. actual</th><th>Brecha</th><th>%FB</th><th>Meta anual ACTUAL</th><th>Meta anual SUGERIDA</th><th>Δ pzs</th><th>Δ%</th></tr></thead><tbody>`;
+  rows.forEach(({r,delta})=>{const s=storeByIdx[r.si];const dp=r.cur?delta/r.cur:0;
+    const ct=BUD3.params.conv_target[s.f];const brecha=Math.max(r.el*ct-r.pz,0);const fb=(BUD3.params.fb&&BUD3.params.fb[s.f])||0;
     h+=`<tr><td class="l">${s.n||'(s/n)'}</td><td class="l"><span class="fbadge" style="background:${css(FCOL[s.f])}"></span>${s.f}</td>
-      <td title="${st<0?'sin datos':st+' estrellas'}" style="color:${st>0?STAR_COL[st]:'var(--muted)'};font-weight:700">${st<0?'—':st+'★'}</td>
       <td>${s.clave}</td><td>${fInt(r.el)}</td><td>${fInt(r.pz)}</td><td>${fPct(r.conv)}</td>
+      <td>${fInt(brecha)}</td><td>${(fb*100).toFixed(1)}%</td>
       <td>${fInt(r.cur)}</td><td>${fInt(r.sug)}</td>
       <td class="${delta>=0?'up':'down'}">${delta>=0?'+':''}${fInt(delta)}</td>
       <td class="${delta>=0?'up':'down'}">${dp>=0?'+':''}${(dp*100).toFixed(0)}%</td></tr>`;});
@@ -1089,15 +1090,16 @@ function renderSugPreview(){
 function buildExcel(scope){
   const formats=scope==='ALL'?['WM','BA','SC']:[scope];const p=BUD3.params;
   const wb=XLSX.utils.book_new();
-  const H1=['Clave','Tienda','Formato','Nivel (estrellas) '+MONTHS_lbl(MONTHS[NM-1]),'Elegibles 12m','Piezas GE 12m','Conversión actual','Venta 2025 (pzs)','Meta anual ACTUAL (pzs)','Meta anual SUGERIDA (pzs)','Δ piezas','Δ %'];
+  const H1=['Clave','Tienda','Formato','Elegibles 12m','Piezas GE 12m','Conversión actual','Conversión objetivo','Potencial (pzs)','Brecha (pzs)','%FB','Venta 2025 (pzs)','Meta anual ACTUAL (pzs)','Meta anual SUGERIDA (pzs)','Δ piezas','Δ %'];
   const s1=[H1];
-  formats.forEach(f=>normBud(f).forEach(r=>{const s=storeByIdx[r.si];const ticket=tickBySi[r.si]||0;
-    const delta=r.sug-r.cur;const dp=r.cur?delta/r.cur:0;const st=starAt(r.si,NM-1);
-    s1.push([s.clave,s.n||'',FNAME[f],st<0?'':st,Math.round(r.el),Math.round(r.pz),r.conv,Math.round(r.v2025||0),
+  formats.forEach(f=>normBud(f).forEach(r=>{const s=storeByIdx[r.si];
+    const delta=r.sug-r.cur;const dp=r.cur?delta/r.cur:0;
+    const ct=p.conv_target[f];const pot=r.el*ct;const brecha=Math.max(pot-r.pz,0);const fb=(p.fb&&p.fb[f])||0;
+    s1.push([s.clave,s.n||'',FNAME[f],Math.round(r.el),Math.round(r.pz),r.conv,ct,Math.round(pot),Math.round(brecha),fb,Math.round(r.v2025||0),
       Math.round(r.cur),Math.round(r.sug),Math.round(delta),dp]);}));
   const ws1=XLSX.utils.aoa_to_sheet(s1);
-  ws1['!cols']=[{wch:8},{wch:30},{wch:16},{wch:14},{wch:12},{wch:12},{wch:14},{wch:15},{wch:18},{wch:19},{wch:11},{wch:8}];
-  fmtCol(ws1,s1.length,[6,11],'0.0%');fmtCol(ws1,s1.length,[4,5,7,8,9,10],'#,##0');
+  ws1['!cols']=[{wch:8},{wch:30},{wch:16},{wch:12},{wch:12},{wch:14},{wch:15},{wch:14},{wch:12},{wch:8},{wch:15},{wch:18},{wch:19},{wch:11},{wch:8}];
+  fmtCol(ws1,s1.length,[5,6,9,14],'0.0%');fmtCol(ws1,s1.length,[3,4,7,8,10,11,12,13],'#,##0');
   XLSX.utils.book_append_sheet(wb,ws1,'Resumen por tienda');
   const H2=['Clave','Tienda','Formato',...MES12,'Total anual'];
   const s2=[H2];
