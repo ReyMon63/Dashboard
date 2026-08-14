@@ -1,12 +1,12 @@
 {
- "published_date": "2026-08-13",
+ "published_date": "2026-08-14",
  "fp": {
-  "BA": "ce9a75a74a4e",
-  "WM": "a38711698d62",
-  "SC": "3cf0231d1565"
+  "BA": "d3e1590c6dd9",
+  "WM": "7ca2753d8083",
+  "SC": "20d548075c30"
  },
  "last_closed": "2026-07",
  "cur_month": "2026-08",
- "asof": 12,
+ "asof": 13,
  "cierre_fp": ""
 }
