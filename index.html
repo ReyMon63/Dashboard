@@ -1013,7 +1013,7 @@ function allBud(f){return f==='ALL'?['WM','BA','SC'].flatMap(normBud):normBud(f)
 function renderSug(){
   const p=BUD3.params;const gPct=(p.growth*100).toFixed(0);
   const floorTxt=`Walmart ${p.floor.WM} · Bodega ${p.floor.BA} · Sam's ${p.floor.SC}`;
-  document.getElementById('sugSubtitle').innerHTML = `Meta = <strong>venta real 2025 × ${gPct}%</strong> de crecimiento, repartida por la <strong>estacionalidad propia de cada tienda</strong> (suavizada) con empuje extra solo en <strong>mayo (HotSale)</strong> y <strong>noviembre (Buen Fin)</strong>, y con un <strong>piso mínimo por formato</strong> (${floorTxt} GE/año).`;
+  document.getElementById('sugSubtitle').innerHTML = `El presupuesto de cada tienda = <strong>venta del año previo + (Brecha × %FB × factor de estrella)</strong>, repartido por su <strong>estacionalidad propia</strong> (mayo y noviembre conservan su pico real), sin bajar del <strong>piso mínimo</strong> del formato (WM ${Math.floor(p.floor.WM/12)} · BA ${Math.floor(p.floor.BA/12)} · SC ${Math.floor(p.floor.SC/12)} GE/mes). Se fija al inicio del año y no se mueve.`;
   const box=document.getElementById('sugSummary');box.innerHTML='';
   formatsInScope().forEach(f=>{
     const rows=normBud(f);let cur=0,sug=0,fl=0;rows.forEach(r=>{cur+=r.cur;sug+=r.sug;if(r.sug<=p.floor[f]+0.5)fl++;});
@@ -1032,7 +1032,7 @@ function renderSug(){
   const EVLAB={5:'HotSale',11:'Buen Fin'};
   const evText=(p.event_months||[5,11]).map(m=>MESN[m]+(EVLAB[m]?' ('+EVLAB[m]+')':'')).join(' y ');
   document.getElementById('sugMethod').innerHTML =
-    `<strong>Cómo se construye la meta:</strong> se parte de la <em>venta real de cada tienda en el año calendario previo</em> (base FIJA del presupuesto del año). A esa base se le suma un avance según dos cosas: su <strong>Brecha</strong> — los clientes que deja sin convertir (<em>elegibles × conversión objetivo</em> del formato − su venta) — y su <strong>nivel de estrellas</strong>, que modula cuánto de esa brecha se le pide: <strong>★3-5 al 100%, ★2 al 80%, y ★0-1 no crecen por brecha</strong> (van al piso, se respeta su venta). El <strong>Factor de Brecha (%FB)</strong> de cada formato se calibra para que el crecimiento TOTAL del formato —<em>ya con el piso adentro</em>— dé el objetivo de <strong>${(p.growth*100).toFixed(0)}%</strong> (este año WM ${(p.fb.WM*100).toFixed(1)}%, BA ${(p.fb.BA*100).toFixed(1)}%, SC ${(p.fb.SC*100).toFixed(1)}%). Así, <strong>meta anual = venta 12m + (Brecha × %FB × factor de estrella)</strong>, repartida mes a mes con estacionalidad suavizada (${(p.alpha*100).toFixed(0)}% propia + ${(100-p.alpha*100).toFixed(0)}% plano); mayo y noviembre = venta real del mes × su incremento. Ninguna meta mensual baja del <strong>piso del formato</strong> (WM ${Math.round(p.floor.WM/12)}, BA ${Math.round(p.floor.BA/12)}, SC ${Math.round(p.floor.SC/12)} GE/mes). El presupuesto se <strong>fija al inicio del año</strong> (base = año previo) y no se mueve durante el año; parámetros en <em>Parámetros Base</em>.`;
+    `<strong>Cómo se arma el presupuesto</strong> (se fija al inicio del año, base = año previo, y no se mueve durante el año):<br>1. <strong>Base:</strong> la venta real de GE de cada tienda en el <em>año calendario previo</em>.<br>2. <strong>Brecha:</strong> las GE que dejó sin convertir = <em>elegibles × conversión objetivo</em> del formato (WM 20% · BA 7% · SC 15%) − su venta. Si ya vende más que su potencial, su brecha es 0 (mantiene).<br>3. <strong>Cuánto de esa brecha se le pide:</strong> según su nivel de estrellas — <strong>★3-5 el 100%, ★2 el 80%, ★0-1 nada</strong> (se quedan en su piso). Ese peso se afina por formato con el <strong>Factor de Brecha (%FB)</strong>, calibrado para que —ya con el piso adentro— el formato crezca el <strong>${(p.growth*100).toFixed(0)}%</strong> objetivo (este año WM ${(p.fb.WM*100).toFixed(1)}%, BA ${(p.fb.BA*100).toFixed(1)}%, SC ${(p.fb.SC*100).toFixed(1)}%).<br>4. <strong>Meta anual = venta previa + (Brecha × %FB × factor de estrella).</strong><br>5. <strong>Reparto mensual:</strong> por la estacionalidad propia de la tienda suavizada (${(p.alpha*100).toFixed(0)}% suya + ${(100-p.alpha*100).toFixed(0)}% plano); <em>mayo y noviembre conservan su venta real del mes</em>, crecida a su misma tasa. Ninguna meta mensual baja del <strong>piso</strong>: WM ${Math.floor(p.floor.WM/12)} · BA ${Math.floor(p.floor.BA/12)} · SC ${Math.floor(p.floor.SC/12)} GE al mes.<br><span style="color:var(--muted)">Parámetros en «Parámetros Base».</span>`;
   renderSugPreview();
 }
 function renderPayability(){
@@ -1105,37 +1105,33 @@ function buildExcel(scope){
   fmtCol(ws2,s2.length,[...Array(13).keys()].map(i=>i+3),'#,##0');
   XLSX.utils.book_append_sheet(wb,ws2,'Meta mensual');
   const starF=(st)=>st<=1?0:(st===2?0.8:1);
-  const H3=['Tienda','Clave','Formato','Elegibles '+PREV,L_VENTA,'Conversión '+PREV,'Potencial '+PREV+' (GE)','Brecha '+PREV+' (GE)','%FB','Factor estrella','Δ x Brecha (GE)','Δ x Piso (GE)','Presupuesto anterior (GE)',L_PRESU];
+  const H3=['Tienda','Clave','Formato','Elegibles '+PREV,L_VENTA,'Conversión '+PREV,'Conversión objetivo','Potencial '+PREV+' (GE)','Brecha '+PREV+' (GE)','%FB','Factor estrella','Δ x Brecha (GE)','Δ x Piso (GE)',L_PRESU,'Presupuesto anterior (GE)'];
   const s3=[H3];
   formats.forEach(f=>normBud(f).forEach(r=>{const s=storeByIdx[r.si];const ct=p.conv_target[f];const fb=(p.fb&&p.fb[f])||0;const v=r.v2025||0;const conv=(r.el?v/r.el:0);const pot=r.el*ct;const brecha=Math.max(pot-v,0);const fac=starF(r.tier);const dbr=brecha*fb*fac;const dpiso=r.sug-v-dbr;
-    s3.push([s.n||'',s.clave,FNAME[f],Math.round(r.el),Math.round(v),conv,Math.round(pot),Math.round(brecha),fb,fac,Math.round(dbr),Math.round(dpiso),Math.round(r.cur),Math.round(r.sug)]);}));
+    s3.push([s.n||'',s.clave,FNAME[f],Math.round(r.el),Math.round(v),conv,ct,Math.round(pot),Math.round(brecha),fb,fac,Math.round(dbr),Math.round(dpiso),Math.round(r.sug),Math.round(r.cur)]);}));
   const ws3=XLSX.utils.aoa_to_sheet(s3);
-  ws3['!cols']=[{wch:30},{wch:8},{wch:16},{wch:13},{wch:16},{wch:13},{wch:18},{wch:16},{wch:9},{wch:14},{wch:16},{wch:13},{wch:22},{wch:18}];
-  fmtCol(ws3,s3.length,[5,8],'0.0%');fmtCol(ws3,s3.length,[9],'0%');fmtCol(ws3,s3.length,[3,4,6,7,10,11,12,13],'#,##0');
+  ws3['!cols']=[{wch:30},{wch:8},{wch:14},{wch:12},{wch:14},{wch:13},{wch:15},{wch:16},{wch:14},{wch:8},{wch:13},{wch:15},{wch:13},{wch:18},{wch:20}];
+  fmtCol(ws3,s3.length,[5,6,9],'0.0%');fmtCol(ws3,s3.length,[10],'0%');fmtCol(ws3,s3.length,[3,4,7,8,11,12,13,14],'#,##0');
   XLSX.utils.book_append_sheet(wb,ws3,'Auditoría');
   const gPct=(p.growth*100).toFixed(0);
-  const m=[['Metodología de presupuesto · Cierre de brecha con factor de estrellas'],[],
-      ['Objetivo','Fijar una meta por tienda justificada por su propio tráfico, alcanzable y no «blanda»; se fija al inicio del año (base = año previo).'],
-      ['Paso 1 · Base','Venta REAL de cada tienda en el AÑO CALENDARIO PREVIO (base fija del presupuesto, piezas de GE).'],
-      ['Paso 2 · Brecha','Brecha = clientes elegibles × conversión objetivo del formato − venta del año previo (las garantías que la tienda deja sin convertir).'],
-      ['Paso 3 · Factor de Brecha (%FB)','Un porcentaje por formato, calibrado para que el crecimiento TOTAL del formato —ya con el piso adentro— sea el objetivo de '+gPct+'%. Este año: WM '+(p.fb.WM*100).toFixed(1)+'%, BA '+(p.fb.BA*100).toFixed(1)+'%, SC '+(p.fb.SC*100).toFixed(1)+'%.'],
-      ['Paso 4 · Factor por estrellas y meta','Meta anual = venta del año previo + (Brecha × %FB × factor de estrella). El factor es 100% para tiendas de 3-5 estrellas, 80% para las de 2, y 0% para las de 0-1 (van al piso; se respeta su venta).'],
-      ['Paso 5 · Reparto mensual','El total anual se distribuye por la estacionalidad PROPIA de la tienda suavizada ('+(p.alpha*100).toFixed(0)+'% su curva + '+(100-p.alpha*100).toFixed(0)+'% plano); mayo (HotSale) y noviembre (Buen Fin) se calculan como la venta real de ese mes × su incremento.'],
-      ['Paso 6 · Piso mínimo','Ninguna meta MENSUAL baja del piso del formato (WM '+Math.round(p.floor.WM/12)+', BA '+Math.round(p.floor.BA/12)+', SC '+Math.round(p.floor.SC/12)+' GE/mes). El presupuesto se fija al inicio del año y no se mueve durante el año.'],
-      [],['Piso mínimo por formato (equivalente diario)','GE / año','Equivale a'],
-      ['Walmart',p.floor.WM,'1 GE cada 2.5 días'],
-      ['Bodega Aurrerá',p.floor.BA,'1 GE cada 5 días'],
-      ['Sam’s Club',p.floor.SC,'1 GE cada 3 días'],
-      [],['Clasificación por estrellas (NO incremental: la estrella = número de criterios cumplidos, de 5)'],
-      ['Criterio 1','Vendió al menos 12 GE en los últimos 12 meses'],
-      ['Criterio 2','No decreció: últimos 3 meses ≥ los mismos 3 meses del año previo (trimestral)'],
-      ['Criterio 3','Cumplió la suma de sus metas de los últimos 12 meses'],
-      ['Criterio 4','Cumplió su meta individual en al menos 10 meses distintos'],
-      ['Criterio 5','Logró ≥80% de la conversión objetivo acumulada en 12 meses (WM 20% · BA 7% · SC 15%)'],
-      ['Nota','Todos estos parámetros (crecimiento, α, meses de evento, pisos, conversión objetivo) viven en el archivo «Parámetros Base» y pueden ajustarse ahí.'],
+  const wmM=Math.floor(p.floor.WM/12),baM=Math.floor(p.floor.BA/12),scM=Math.floor(p.floor.SC/12);
+  const fbTxt='WM '+(p.fb.WM*100).toFixed(1)+'% · BA '+(p.fb.BA*100).toFixed(1)+'% · SC '+(p.fb.SC*100).toFixed(1)+'%';
+  const m=[['Metodología de presupuesto '+BY+' · cómo se arma cada dato'],
+      ['Las letras (D, E, F…) son las columnas de la hoja «Auditoría». El presupuesto se fija al inicio del año (base = año previo) y no se mueve.'],[],
+      ['Objetivo','Fijar la meta de cada tienda con su propio dato: su venta del año previo + cerrar parte de su brecha. Alcanzable y justificada por su tráfico.'],
+      ['1 · Conversión (F)','= Venta previa (E) ÷ Elegibles (D). Qué proporción de sus clientes elegibles terminó comprando GE.'],
+      ['2 · Potencial (H)','= Elegibles (D) × Conversión objetivo (G). Las GE que vendería a la conversión meta del formato (WM 20% · BA 7% · SC 15%).'],
+      ['3 · Brecha (I)','= MÁX( Potencial (H) − Venta previa (E) ; 0 ). Las GE que deja sin convertir. Si ya vende más que su potencial, es 0 (mantiene).'],
+      ['4 · Δ x Brecha (L)','= Brecha (I) × %FB (J) × Factor estrella (K). Las GE extra que se le piden por cerrar brecha.'],[],
+      ['%FB (J)','Un % por formato, calibrado para que —ya con el piso adentro— el formato crezca el '+gPct+'% objetivo. '+BY+': '+fbTxt+'.'],
+      ['Factor estrella (K)','★3-5 = 100% · ★2 = 80% · ★0-1 = 0% (no crecen por brecha; se quedan en su piso).'],
+      ['Δ x Piso (M)','= Presupuesto (N) − Venta previa (E) − Δ x Brecha (L). Las GE que agrega el piso mínimo cuando la tienda es chica.'],
+      ['Presupuesto '+BY+' (N)','= Venta previa (E) + Δ x Brecha (L) + Δ x Piso (M). Sale del motor: venta + brecha, repartido por estacionalidad, con el piso mensual aplicado.'],
+      ['Presupuesto anterior (O)','Solo referencia: la meta que la tienda tenía antes. No entra en el cálculo.'],[],
+      ['Reparto mensual','Estacionalidad propia suavizada ('+(p.alpha*100).toFixed(0)+'% suya + '+(100-p.alpha*100).toFixed(0)+'% plano) en los 10 meses normales; mayo y noviembre conservan su venta real del mes, crecida a su misma tasa.'],
+      ['Piso mínimo mensual','Ninguna meta mensual baja de: WM '+wmM+' · BA '+baM+' · SC '+scM+' GE al mes.'],
       [],['Generado',DB.meta.generated+' · Fuente: Histórico WM/BA/SC (carpeta Avance de ventas)']];
-  const ws4=XLSX.utils.aoa_to_sheet(m);ws4['!cols']=[{wch:34},{wch:12},{wch:52}];
-  for(let R=11;R<=13;R++){const a=XLSX.utils.encode_cell({r:R,c:1});if(ws4[a])ws4[a].z='#,##0';}
+  const ws4=XLSX.utils.aoa_to_sheet(m);ws4['!cols']=[{wch:24},{wch:104}];
   XLSX.utils.book_append_sheet(wb,ws4,'Metodología');
   const fn=(scope==='ALL'?'Presupuesto_GE_GrupoWalmart_':'Presupuesto_GE_'+scope+'_')+BY+'.xlsx';
   XLSX.writeFile(wb,fn);
