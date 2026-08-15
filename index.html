@@ -1104,13 +1104,14 @@ function buildExcel(scope){
   const ws2=XLSX.utils.aoa_to_sheet(s2);ws2['!cols']=[{wch:30},{wch:8},{wch:16},...MES12.map(_=>({wch:6})),{wch:18}];
   fmtCol(ws2,s2.length,[...Array(13).keys()].map(i=>i+3),'#,##0');
   XLSX.utils.book_append_sheet(wb,ws2,'Meta mensual');
-  const H3=['Tienda','Clave','Formato','Elegibles '+PREV,L_VENTA,'Conversión '+PREV,'Potencial '+PREV+' (GE)','Brecha '+PREV+' (GE)','Presupuesto anterior (GE)',L_PRESU,'Δ x Brecha (GE)'];
+  const starF=(st)=>st<=1?0:(st===2?0.8:1);
+  const H3=['Tienda','Clave','Formato','Elegibles '+PREV,L_VENTA,'Conversión '+PREV,'Potencial '+PREV+' (GE)','Brecha '+PREV+' (GE)','%FB','Factor estrella','Δ x Brecha (GE)','Δ x Piso (GE)','Presupuesto anterior (GE)',L_PRESU];
   const s3=[H3];
-  formats.forEach(f=>normBud(f).forEach(r=>{const s=storeByIdx[r.si];const ct=p.conv_target[f];const v=r.v2025||0;const conv=(r.el?v/r.el:0);const pot=r.el*ct;const brecha=Math.max(pot-v,0);const dbr=r.sug-v;
-    s3.push([s.n||'',s.clave,FNAME[f],Math.round(r.el),Math.round(v),conv,Math.round(pot),Math.round(brecha),Math.round(r.cur),Math.round(r.sug),Math.round(dbr)]);}));
+  formats.forEach(f=>normBud(f).forEach(r=>{const s=storeByIdx[r.si];const ct=p.conv_target[f];const fb=(p.fb&&p.fb[f])||0;const v=r.v2025||0;const conv=(r.el?v/r.el:0);const pot=r.el*ct;const brecha=Math.max(pot-v,0);const fac=starF(r.tier);const dbr=brecha*fb*fac;const dpiso=r.sug-v-dbr;
+    s3.push([s.n||'',s.clave,FNAME[f],Math.round(r.el),Math.round(v),conv,Math.round(pot),Math.round(brecha),fb,fac,Math.round(dbr),Math.round(dpiso),Math.round(r.cur),Math.round(r.sug)]);}));
   const ws3=XLSX.utils.aoa_to_sheet(s3);
-  ws3['!cols']=[{wch:30},{wch:8},{wch:16},{wch:13},{wch:16},{wch:14},{wch:18},{wch:16},{wch:22},{wch:18},{wch:16}];
-  fmtCol(ws3,s3.length,[5],'0.0%');fmtCol(ws3,s3.length,[3,4,6,7,8,9,10],'#,##0');
+  ws3['!cols']=[{wch:30},{wch:8},{wch:16},{wch:13},{wch:16},{wch:13},{wch:18},{wch:16},{wch:9},{wch:14},{wch:16},{wch:13},{wch:22},{wch:18}];
+  fmtCol(ws3,s3.length,[5,8],'0.0%');fmtCol(ws3,s3.length,[9],'0%');fmtCol(ws3,s3.length,[3,4,6,7,10,11,12,13],'#,##0');
   XLSX.utils.book_append_sheet(wb,ws3,'Auditoría');
   const gPct=(p.growth*100).toFixed(0);
   const m=[['Metodología de presupuesto · Cierre de brecha con factor de estrellas'],[],
