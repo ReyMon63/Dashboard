@@ -1,5 +1,5 @@
 {
- "published_date": "2026-08-15",
+ "published_date": "2026-08-16",
  "fp": {
   "BA": "d3e1590c6dd9",
   "WM": "7ca2753d8083",
@@ -7,6 +7,6 @@
  },
  "last_closed": "2026-07",
  "cur_month": "2026-08",
- "asof": 14,
+ "asof": 15,
  "cierre_fp": ""
 }
