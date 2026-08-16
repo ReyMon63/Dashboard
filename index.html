@@ -75,13 +75,13 @@ h1{font-size:20px;margin:0;font-weight:700;letter-spacing:-.01em}
   border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin:14px 0 18px}
 .ctl{display:flex;flex-direction:column;gap:5px}
 .ctl label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:600}
-.seg{display:flex;border:1px solid var(--border);border-radius:9px;overflow:hidden}
-.seg button{border:0;background:transparent;color:var(--text-secondary);padding:7px 12px;font-size:13px;
-  cursor:pointer;font-family:inherit;font-weight:500}
+.seg{display:flex;border:1px solid var(--border);border-radius:9px;overflow:hidden;height:36px;box-sizing:border-box}
+.seg button{border:0;background:transparent;color:var(--text-secondary);padding:0 13px;font-size:13px;
+  cursor:pointer;font-family:inherit;font-weight:500;display:flex;align-items:center}
 .seg button.active{background:var(--text-primary);color:var(--surface-1)}
-.seg.sm button{padding:6px 10px;font-size:12px}
-select,input[type=text]{font-family:inherit;font-size:13px;padding:7px 10px;border-radius:8px;
-  border:1px solid var(--border);background:var(--card);color:var(--text-primary);min-width:120px}
+.seg.sm button{padding:0 11px;font-size:12px}
+select,input[type=text]{font-family:inherit;font-size:13px;padding:0 10px;border-radius:8px;
+  border:1px solid var(--border);background:var(--card);color:var(--text-primary);min-width:120px;height:36px;box-sizing:border-box}
 .spacer{flex:1}
 .iconbtn{border:1px solid var(--border);background:var(--card);color:var(--text-secondary);
   border-radius:8px;padding:7px 11px;cursor:pointer;font-size:13px;font-family:inherit}
@@ -463,6 +463,7 @@ datalist{color:#000}
           <button data-v="monto" class="active">Monto $</button>
           <button data-v="cant">Piezas</button>
           <button data-v="conv">Conversión</button>
+          <button data-v="eleg">Elegibles</button>
         </div>
       </div>
       <div class="chartbox sm"><canvas id="chYoY"></canvas></div>
@@ -1290,8 +1291,12 @@ seg('segRankMetric',v=>{state.rankMetric=v;renderRank();});
   st.innerHTML='<option value="ALL">Todos</option>'+terr.map(t=>`<option value="${t}">${t}</option>`).join('');
   if(dist.length>1)document.getElementById('ctlDistrito').style.display='';
   if(terr.length>1)document.getElementById('ctlTerritorial').style.display='';
-  sd.onchange=()=>{state.distrito=sd.value;refreshAll();};
-  st.onchange=()=>{state.territorial=st.value;refreshAll();};
+  const terrFmt={},distFmt={};
+  Object.keys(SEG).forEach(si=>{const g=SEG[si],ff=DB.stores[+si]&&DB.stores[+si].f;if(!ff)return;if(g.t)terrFmt[g.t]=ff;if(g.d)distFmt[g.d]=ff;});
+  function setFormato(f){state.formato=f;document.querySelectorAll('#segFormato button').forEach(b=>b.classList.toggle('active',b.dataset.v===f));}
+  function syncFmt(){let f='ALL';if(state.territorial&&state.territorial!=='ALL')f=terrFmt[state.territorial]||'ALL';else if(state.distrito&&state.distrito!=='ALL')f=distFmt[state.distrito]||'ALL';setFormato(f);}
+  sd.onchange=()=>{state.distrito=sd.value;syncFmt();refreshAll();};
+  st.onchange=()=>{state.territorial=st.value;syncFmt();refreshAll();};
 })();
 document.getElementById('themeBtn').onclick=()=>{const r=document.documentElement;r.dataset.theme=r.dataset.theme==='dark'?'light':'dark';refreshAll();if(document.getElementById('storeResult').classList.contains('on'))document.getElementById('storeGo').click();};
 {const lo=document.getElementById('logoutBtn');if(lo)lo.onclick=()=>location.reload();}
