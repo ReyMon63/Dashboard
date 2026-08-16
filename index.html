@@ -85,8 +85,8 @@ select,input[type=text]{font-family:inherit;font-size:13px;padding:0 10px;border
 .spacer{flex:1}
 .anual-menu{position:absolute;top:100%;left:0;margin-top:5px;background:var(--card);border:1px solid var(--border);border-radius:9px;box-shadow:0 8px 22px rgba(0,0,0,.14);padding:4px;display:none;z-index:60;min-width:120px}
 .anual-menu.open{display:block}
-.anual-opt{padding:7px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text-secondary)}
-.anual-opt:hover{background:var(--surface-1);color:var(--text-primary)}
+.anual-opt{padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-secondary);text-align:center}
+.anual-opt:hover{background:var(--text-primary);color:var(--surface-1)}
 .iconbtn{border:1px solid var(--border);background:var(--card);color:var(--text-secondary);
   border-radius:8px;padding:7px 11px;cursor:pointer;font-size:13px;font-family:inherit}
 .iconbtn:disabled{opacity:.38;cursor:not-allowed;filter:grayscale(.4)}
@@ -408,7 +408,7 @@ datalist{color:#000}
       <div class="seg sm" id="segBase">
         <button data-v="MES" class="active">Mes</button>
         <button data-v="YTD">Acum. año (YTD)</button>
-        <button data-v="ANUAL" id="btnAnual">Anual ▾</button>
+        <button data-v="ANUAL" id="btnAnual">Anual</button>
       </div>
       <div id="anualMenu" class="anual-menu"></div>
     </div>
@@ -1304,13 +1304,13 @@ seg('segFormato',v=>{state.formato=v;refreshAll();});
   const years=[...new Set(MONTHS.map(m=>+m.split('-')[0]))].sort((a,b)=>b-a);
   menu.innerHTML=years.map(y=>`<div class="anual-opt" data-y="${y}">${y}</div>`).join('');
   const setA=btn=>{sg.querySelectorAll('button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');};
-  const close=()=>menu.classList.remove('open');
-  const pick=(b,base)=>{setA(b);state.base=base;btnAnual.textContent='Anual ▾';close();updProjBanner();renderKPIs();};
+  const closeRevert=()=>{menu.classList.remove('open');if(state.base!=='ANUAL'){setA(sg.querySelector('[data-v="'+state.base+'"]'));btnAnual.textContent='Anual';}};
+  const pick=(b,base)=>{setA(b);state.base=base;btnAnual.textContent='Anual';menu.classList.remove('open');updProjBanner();renderKPIs();};
   sg.querySelector('[data-v="MES"]').onclick=e=>pick(e.currentTarget,'MES');
   sg.querySelector('[data-v="YTD"]').onclick=e=>pick(e.currentTarget,'YTD');
-  btnAnual.onclick=e=>{e.stopPropagation();menu.classList.toggle('open');};
-  menu.querySelectorAll('.anual-opt').forEach(o=>o.onclick=()=>{state.base='ANUAL';state.anualYear=+o.dataset.y;setA(btnAnual);btnAnual.textContent=o.dataset.y+' ▾';close();updProjBanner();renderKPIs();});
-  document.addEventListener('click',e=>{if(!sg.contains(e.target)&&!menu.contains(e.target))close();});
+  btnAnual.onclick=e=>{e.stopPropagation();if(menu.classList.contains('open')){closeRevert();}else{setA(btnAnual);menu.classList.add('open');}};
+  menu.querySelectorAll('.anual-opt').forEach(o=>o.onclick=e=>{e.stopPropagation();state.base='ANUAL';state.anualYear=+o.dataset.y;setA(btnAnual);btnAnual.textContent=o.dataset.y;menu.classList.remove('open');updProjBanner();renderKPIs();});
+  document.addEventListener('click',e=>{if(!sg.contains(e.target)&&!menu.contains(e.target))closeRevert();});
 })();
 seg('segMetric',v=>{state.metric=v;renderTrend();});
 seg('segYoY',v=>{state.yoy=v;renderYoY();});
