@@ -83,6 +83,10 @@ h1{font-size:20px;margin:0;font-weight:700;letter-spacing:-.01em}
 select,input[type=text]{font-family:inherit;font-size:13px;padding:0 10px;border-radius:8px;
   border:1px solid var(--border);background:var(--card);color:var(--text-primary);min-width:120px;height:36px;box-sizing:border-box}
 .spacer{flex:1}
+.anual-menu{position:absolute;top:100%;left:0;margin-top:5px;background:var(--card);border:1px solid var(--border);border-radius:9px;box-shadow:0 8px 22px rgba(0,0,0,.14);padding:4px;display:none;z-index:60;min-width:120px}
+.anual-menu.open{display:block}
+.anual-opt{padding:7px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text-secondary)}
+.anual-opt:hover{background:var(--surface-1);color:var(--text-primary)}
 .iconbtn{border:1px solid var(--border);background:var(--card);color:var(--text-secondary);
   border-radius:8px;padding:7px 11px;cursor:pointer;font-size:13px;font-family:inherit}
 .iconbtn:disabled{opacity:.38;cursor:not-allowed;filter:grayscale(.4)}
@@ -399,12 +403,14 @@ datalist{color:#000}
       <label>Mes de cierre</label>
       <select id="selMonth"></select>
     </div>
-    <div class="ctl">
+    <div class="ctl" style="position:relative">
       <label>Base</label>
       <div class="seg sm" id="segBase">
         <button data-v="MES" class="active">Mes</button>
         <button data-v="YTD">Acum. año (YTD)</button>
+        <button data-v="ANUAL" id="btnAnual">Anual ▾</button>
       </div>
+      <div id="anualMenu" class="anual-menu"></div>
     </div>
     <div class="ctl" id="ctlDistrito" style="display:none">
       <label>Distrito</label>
@@ -568,12 +574,26 @@ function mlabel(mi){const[y,m]=MONTHS[mi].split('-');return MES_ES[m]+' '+y.slic
 function yearOf(mi){return +MONTHS[mi].split('-')[0];}
 function monOf(mi){return MONTHS[mi].split('-')[1];}
 function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
-const state={formato:'ALL',mi:NM-1,base:'MES',metric:'monto',yoy:'monto',rankDir:'top',rankMetric:'monto',budMethod:'v2',distrito:'ALL',territorial:'ALL'};
+const state={formato:'ALL',mi:NM-1,base:'MES',metric:'monto',yoy:'monto',rankDir:'top',rankMetric:'monto',budMethod:'v2',distrito:'ALL',territorial:'ALL',anualYear:null};
 const SEG=DB.seg||{};
 const PROJ=(DB.meta&&DB.meta.projected)||null;
 function isProjected(mi){return PROJ&&mi===PROJ.mi;}
 function updProjBanner(){
   const b=document.getElementById('projBanner');if(!b)return;
+  if(state.base==='ANUAL'){
+    const y=state.anualYear,f=state.formato,em=lastClosedMonthOfYear(y);
+    const isDec=em>=0&&MONTHS[em].split('-')[1]==='12';
+    if(em>=0&&!isDec){
+      const acum=aggYTD(f,em),pmi=priorYearIdx(em);
+      const pd=pmi!==null?aggYTD(f,pmi):null,fy=lastClosedMonthOfYear(y-1),pf=fy>=0?aggYTD(f,fy):null;
+      const sM=(pf&&pf[0]&&pd)?pd[0]/pf[0]:null,sC=(pf&&pf[1]&&pd)?pd[1]/pf[1]:null;
+      const pjM=sM?acum[0]/sM:null,pjC=sC?acum[1]/sC:null;
+      b.style.display='flex';
+      document.getElementById('projBannerTxt').innerHTML=`<strong>Año ${y} incompleto · datos reales hasta ${mlabel(em)}.</strong> Venta final esperada al cierre (con estacionalidad ${y-1})`+(pjM!=null?`: <strong>${fMoneyFull(pjM)}</strong> · <strong>${fInt(pjC)} GE</strong>`:' no disponible')+`. Las tarjetas y gráficos muestran solo el dato real acumulado.`;
+      return;
+    }
+    b.style.display='none';return;
+  }
   if(isProjected(state.mi)){
     b.style.display='flex';
     document.getElementById('projBannerTxt').innerHTML=
@@ -629,6 +649,7 @@ function aggAt(f,mi){
 }
 /* YTD sum from January of that month's year up to mi (inclusive) */
 function ytdRange(mi){const y=yearOf(mi);let s=mi;while(s>0&&yearOf(s-1)===y)s--;return[s,mi];}
+function lastClosedMonthOfYear(y){let b=-1;for(let i=0;i<NM;i++){if(yearOf(i)===y&&!isProjected(i))b=i;}return b;}
 function aggYTD(f,mi){const[s,e]=ytdRange(mi);let a=[0,0,0,0,0];for(let i=s;i<=e;i++){const d=aggAt(f,i);for(let j=0;j<4;j++)a[j]+=d[j];a[4]=Math.max(a[4],d[4]);}return a;}
 function priorYearIdx(mi){const t=mi-12;return t>=0?t:null;}
 function metricsFrom(a){const[m,c,mt,e]=a;return{monto:m,cant:c,conv:e?c/e:0,alc:mt?c/mt:0,ticket:c?m/c:0,eleg:e,meta:mt};}
@@ -805,7 +826,8 @@ const KDEF=[
 function ceroCount(f,mi){return recsAt(mi,f).filter(r=>r[3]<=0).length;}
 function kpiValues(f,mi,base){const a=base==='YTD'?aggYTD(f,mi):aggAt(f,mi);const m=metricsFrom(a);m.tiendas=a[4];m.cero=ceroCount(f,mi);return m;}
 function renderKPIs(){
-  const f=state.formato,mi=state.mi,base=state.base;
+  const f=state.formato;const anual=state.base==='ANUAL';let mi=state.mi,base=state.base;
+  if(anual){const em=lastClosedMonthOfYear(state.anualYear);if(em>=0)mi=em;base='YTD';}
   const cur=kpiValues(f,mi,base);
   const pmi=priorYearIdx(mi);
   const yoyMes=pmi!==null?metricsFromExt(kpiValues(f,pmi,'MES')):null;
@@ -823,7 +845,7 @@ function renderKPIs(){
     const isPct=k.pctMetric;
     const yoyd=deltaHTML(curMes[k.key], yoyMes?yoyMes[k.key]:null, isPct, k.invert);
     const ytdd=k.noYtd?'<span class="dv" style="color:var(--muted)">—</span>':deltaHTML(curYtd[k.key], yoyYtd?yoyYtd[k.key]:null, isPct, k.invert);
-    const subExtra=(k.noYtd)?'':(base==='YTD'?' · acumulado':'');
+    const subExtra=(k.noYtd)?'':(anual?' · año '+state.anualYear:(base==='YTD'?' · acumulado':''));
     el.innerHTML=`${k.hero?'<div class="hero-mark"></div>':''}
       <div class="k-label">${k.label}</div>
       <div class="k-val">${k.fmt(val)}</div>
@@ -1277,7 +1299,19 @@ function refreshAll(){updProjBanner();renderExec();renderKPIs();applyPieLayout()
 function initMonths(){const s=document.getElementById('selMonth');s.innerHTML=MONTHS.map((m,i)=>`<option value="${i}" ${i===NM-1?'selected':''}>${mlabel(i)}</option>`).join('');
   s.onchange=()=>{state.mi=+s.value;refreshAll();};}
 seg('segFormato',v=>{state.formato=v;refreshAll();});
-seg('segBase',v=>{state.base=v;renderKPIs();});
+(function initBase(){
+  const sg=document.getElementById('segBase'),btnAnual=document.getElementById('btnAnual'),menu=document.getElementById('anualMenu');
+  const years=[...new Set(MONTHS.map(m=>+m.split('-')[0]))].sort((a,b)=>b-a);
+  menu.innerHTML=years.map(y=>`<div class="anual-opt" data-y="${y}">${y}</div>`).join('');
+  const setA=btn=>{sg.querySelectorAll('button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');};
+  const close=()=>menu.classList.remove('open');
+  const pick=(b,base)=>{setA(b);state.base=base;btnAnual.textContent='Anual ▾';close();updProjBanner();renderKPIs();};
+  sg.querySelector('[data-v="MES"]').onclick=e=>pick(e.currentTarget,'MES');
+  sg.querySelector('[data-v="YTD"]').onclick=e=>pick(e.currentTarget,'YTD');
+  btnAnual.onclick=e=>{e.stopPropagation();menu.classList.toggle('open');};
+  menu.querySelectorAll('.anual-opt').forEach(o=>o.onclick=()=>{state.base='ANUAL';state.anualYear=+o.dataset.y;setA(btnAnual);btnAnual.textContent=o.dataset.y+' ▾';close();updProjBanner();renderKPIs();});
+  document.addEventListener('click',e=>{if(!sg.contains(e.target)&&!menu.contains(e.target))close();});
+})();
 seg('segMetric',v=>{state.metric=v;renderTrend();});
 seg('segYoY',v=>{state.yoy=v;renderYoY();});
 seg('segRankDir',v=>{state.rankDir=v;renderRank();});
