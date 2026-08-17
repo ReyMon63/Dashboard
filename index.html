@@ -454,8 +454,13 @@ datalist{color:#000}
       <div class="legend" id="trendLegend"></div>
     </div>
     <div class="panel" id="piePanel">
-      <h2>Venta por formato</h2>
-      <div class="ph" id="piePh"></div>
+      <div class="phrow"><div><h2 id="pieTitle">Venta por formato</h2><div class="ph" id="piePh"></div></div>
+        <select id="selPie" style="min-width:150px">
+          <option value="monto">Monto GE</option>
+          <option value="eleg">Elegibles</option>
+          <option value="cero">Tiendas sin venta</option>
+          <option value="conv">Conversión</option>
+        </select></div>
       <div class="chartbox sm"><canvas id="chPie"></canvas></div>
       <div class="legend" id="pieLegend"></div>
     </div>
@@ -574,7 +579,7 @@ function mlabel(mi){const[y,m]=MONTHS[mi].split('-');return MES_ES[m]+' '+y.slic
 function yearOf(mi){return +MONTHS[mi].split('-')[0];}
 function monOf(mi){return MONTHS[mi].split('-')[1];}
 function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
-const state={formato:'ALL',mi:NM-1,base:'MES',metric:'monto',yoy:'monto',rankDir:'top',rankMetric:'monto',budMethod:'v2',distrito:'ALL',territorial:'ALL',anualYear:null};
+const state={formato:'ALL',mi:NM-1,base:'MES',metric:'monto',yoy:'monto',rankDir:'top',rankMetric:'monto',budMethod:'v2',distrito:'ALL',territorial:'ALL',anualYear:null,pie:'monto'};
 const SEG=DB.seg||{};
 const PROJ=(DB.meta&&DB.meta.projected)||null;
 function isProjected(mi){return PROJ&&mi===PROJ.mi;}
@@ -901,19 +906,37 @@ function applyPieLayout(){
 }
 function fitTrendPie(){requestAnimationFrame(()=>requestAnimationFrame(()=>{ if(chTrend)chTrend.resize(); if(chPie)chPie.resize(); }));}
 function renderPie(){
-  const mi=state.mi;const fmts=formatsInScope();
-  // el pastel solo tiene sentido si hay más de un formato en la selección
+  const mi=state.mi;const fmts=formatsInScope();const key=state.pie||'monto';
+  const title=document.getElementById('pieTitle');
   if(fmts.length<2){ if(chPie){chPie.destroy();chPie=null;} fitTrendPie(); return; }
-  const montos=fmts.map(f=>metricsFrom(aggAt(f,mi)).monto);
-  const total=montos.reduce((a,b)=>a+b,0)||1;
+  const CT=BUD3.params.conv_target;
+  const val=f=>key==='monto'?metricsFrom(aggAt(f,mi)).monto:key==='eleg'?aggAt(f,mi)[3]:key==='cero'?ceroCount(f,mi):metricsFrom(aggAt(f,mi)).conv;
+  const vals=fmts.map(val);
+  const TIT={monto:'Venta por formato',eleg:'Elegibles por formato',cero:'Tiendas sin venta por formato',conv:'Conversión por formato'};
+  const PH={monto:'Participación del monto GE',eleg:'Participación de elegibles',cero:'Tiendas sin una sola GE',conv:'Conversión (GE ÷ elegibles) vs. objetivo'};
+  if(title)title.textContent=TIT[key];
+  document.getElementById('piePh').textContent=PH[key]+' · '+mlabel(mi);
+  const ctx=document.getElementById('chPie');
   if(chPie)chPie.destroy();
-  chPie=new Chart(document.getElementById('chPie'),{type:'doughnut',data:{labels:fmts.map(f=>FNAME[f]),
-    datasets:[{data:montos,backgroundColor:fmts.map(f=>css(FCOL[f])),borderColor:css('--surface-1'),borderWidth:2}]},
+  if(key==='conv'){
+    const objtick={id:'objtick',afterDatasetsDraw(ch){const c2=ch.ctx,ys=ch.scales.y;c2.save();c2.strokeStyle=css('--text-primary');c2.lineWidth=2;
+      fmts.forEach((f,i)=>{const bar=ch.getDatasetMeta(0).data[i];if(!bar)return;const yy=ys.getPixelForValue(CT[f]);c2.beginPath();c2.moveTo(bar.x-bar.width/2,yy);c2.lineTo(bar.x+bar.width/2,yy);c2.stroke();});c2.restore();}};
+    chPie=new Chart(ctx,{type:'bar',data:{labels:fmts.map(f=>FNAME[f]),datasets:[{data:vals,backgroundColor:fmts.map(f=>css(FCOL[f])),borderRadius:4,barPercentage:.7}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+        tooltip:{backgroundColor:css('--card'),titleColor:css('--text-primary'),bodyColor:textC(),borderColor:css('--border'),borderWidth:1,padding:10,cornerRadius:8,
+          callbacks:{title:c=>FNAME[fmts[c[0].dataIndex]],label:c=>(c.parsed.y*100).toFixed(1)+'% · objetivo '+(CT[fmts[c.dataIndex]]*100).toFixed(0)+'%'}}},
+        scales:{x:{grid:{display:false},ticks:{color:mutedC(),font:{size:11}}},y:{grid:{color:gridC()},border:{display:false},beginAtZero:true,ticks:{color:mutedC(),font:{size:11},callback:v=>(v*100).toFixed(0)+'%'}}}},plugins:[objtick]});
+    document.getElementById('pieLegend').innerHTML=fmts.map((f,i)=>`<span><span class="dot" style="background:${css(FCOL[f])}"></span>${FNAME[f]} ${(vals[i]*100).toFixed(1)}% <span style="color:var(--muted)">· obj ${(CT[f]*100).toFixed(0)}%</span></span>`).join('');
+    fitTrendPie();return;
+  }
+  const total=vals.reduce((a,b)=>a+b,0)||1;
+  const fF=key==='monto'?fMoneyFull:fInt, fS=key==='monto'?fMoney:fInt;
+  chPie=new Chart(ctx,{type:'doughnut',data:{labels:fmts.map(f=>FNAME[f]),
+    datasets:[{data:vals,backgroundColor:fmts.map(f=>css(FCOL[f])),borderColor:css('--surface-1'),borderWidth:2}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'58%',
       plugins:{legend:{display:false},tooltip:{backgroundColor:css('--card'),titleColor:css('--text-primary'),bodyColor:textC(),borderColor:css('--border'),borderWidth:1,padding:10,cornerRadius:8,
-        callbacks:{label:c=>c.label+': '+fMoneyFull(c.parsed)+' ('+(c.parsed/total*100).toFixed(0)+'%)'}}}}});
-  document.getElementById('piePh').textContent='Participación del monto GE · '+mlabel(mi);
-  document.getElementById('pieLegend').innerHTML=fmts.map((f,i)=>`<span><span class="dot" style="background:${css(FCOL[f])}"></span>${FNAME[f]} ${(montos[i]/total*100).toFixed(0)}% · ${fMoney(montos[i])}</span>`).join('');
+        callbacks:{label:c=>c.label+': '+fF(c.parsed)+' ('+(c.parsed/total*100).toFixed(0)+'%)'}}}}});
+  document.getElementById('pieLegend').innerHTML=fmts.map((f,i)=>`<span><span class="dot" style="background:${css(FCOL[f])}"></span>${FNAME[f]} ${(vals[i]/total*100).toFixed(0)}% · ${fS(vals[i])}</span>`).join('');
   fitTrendPie();
 }
 function renderYoY(){
@@ -1316,6 +1339,7 @@ seg('segFormato',v=>{state.formato=v;refreshAll();});
 })();
 seg('segMetric',v=>{state.metric=v;renderTrend();});
 seg('segYoY',v=>{state.yoy=v;renderYoY();});
+{const sp=document.getElementById('selPie');if(sp)sp.onchange=e=>{state.pie=e.target.value;renderPie();};}
 seg('segRankDir',v=>{state.rankDir=v;renderRank();});
 seg('segRankMetric',v=>{state.rankMetric=v;renderRank();});
 // Segmentación: poblar filtros (se ocultan si solo hay un valor = placeholder)
