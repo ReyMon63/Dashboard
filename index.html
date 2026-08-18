@@ -1040,7 +1040,7 @@ const CRITSHORT=['≥12 GE','Sin Decremento','≥Meta Anual','10 meses','Convers
 function critAt(si,mi){const a=DB.stars.crit&&DB.stars.crit[String(si)];if(!a)return -1;const k=mi-STARS.start_idx;return(k>=0&&k<a.length)?a[k]:-1;}
 const PROXNAME=['Venta mínima','Crecimiento','Meta','Regularidad','Penetración'];
 function proximaJS(si,mi){
-  const f=storeByIdx[si].f;const CT=DB.budget2.params.conv_target;const hist=storeHistory(si);
+  const f=storeByIdx[si].f;const CT=BUD3.params.conv_target;const hist=storeHistory(si);
   const S3=(a,b)=>{let s=0;for(let i=a;i<=b;i++){const r=hist[i];if(r)s+=Math.max(r[3],0);}return s;};
   let ca=0,me=0,el=0,hits=0;
   for(let i=mi-11;i<=mi;i++){const r=hist[i];if(r){ca+=Math.max(r[3],0);me+=(r[4]||0);el+=Math.max(r[5]||0,0);if((r[4]||0)>0&&r[3]>=r[4])hits++;}}
@@ -1209,7 +1209,10 @@ function buildExcel(scope){
 }
 function fmtCol(ws,nrows,cols,z){for(let R=1;R<nrows;R++)cols.forEach(C=>{const a=XLSX.utils.encode_cell({r:R,c:C});if(ws[a]&&ws[a].t==='n')ws[a].z=z;});}
 function buildMoversExcel(){
-  if(!clsMovers.length)return;const mi=state.mi;
+  if(!clsMovers.length)return;
+  // Mismo mes que usó la clasificación (renderStars topa al último cierre si el visible es proyectado),
+  // para que las cifras exportadas no salgan en cero.
+  let mi=state.mi;{const anyLv=STARS.levels[Object.keys(STARS.levels)[0]];const lastStar=STARS.start_idx+(anyLv?anyLv.length:0)-1;if(mi>lastStar)mi=lastStar;}
   const H=['Clave','Tienda','Formato','Distrito','Territorial','Nivel anterior','Nivel actual','Movimiento','Δ niveles','Monto GE ($)','Piezas GE','Conversión','Alcance','Elegibles','Próxima estrella','Cómo lograrla'];
   const rows=[H];
   clsMovers.slice().sort((a,b)=>b.dir-a.dir||b.now-a.now).forEach(m=>{const s=storeByIdx[m.si];const g=segOf(m.si);const r=storeHistory(m.si)[mi];
