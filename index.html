@@ -366,7 +366,7 @@ datalist{color:#000}
         <li><strong>Conversión</strong>: piezas de GE entre clientes elegibles. Los cambios se leen en <em>puntos porcentuales (pp)</em>.</li>
         <li><strong>Alcance plan</strong>: qué tanto de la meta (presupuesto) se cumplió.</li>
         <li><strong>Ticket promedio, Tiendas con venta y Tiendas sin venta</strong> completan la foto.</li>
-        <li>Cada tarjeta compara contra el <strong>mismo mes del año pasado</strong> (YoY) y contra el <strong>acumulado del año previo</strong> (YTD vs YTD).</li>
+        <li>Cada tarjeta muestra <strong>una sola referencia, según la BASE</strong> que elijas: con <strong>Mes</strong> compara contra el <strong>mismo mes del año pasado</strong> (YoY); con <strong>YTD</strong> compara el <strong>acumulado del año contra el mismo acumulado del año previo</strong> (YTD). («Tiendas sin venta» siempre usa YoY del mes por ser una foto del mes.)</li>
       </ul>
 
       <h3>Oportunidad de conversión</h3>
@@ -850,16 +850,23 @@ function renderKPIs(){
     const val=cur[k.key];
     const el=document.createElement('div');el.className='kpi'+(k.hero?' hero':'');
     const isPct=k.pctMetric;
-    const yoyd=deltaHTML(curMes[k.key], yoyMes?yoyMes[k.key]:null, isPct, k.invert);
-    const ytdd=k.noYtd?'<span class="dv" style="color:var(--muted)">—</span>':deltaHTML(curYtd[k.key], yoyYtd?yoyYtd[k.key]:null, isPct, k.invert);
     const subExtra=(k.noYtd)?'':(anual?' · año '+state.anualYear:(base==='YTD'?' · acumulado':''));
+    // Referencia SEGÚN la BASE: Mes → YoY (mismo mes) · YTD/Anual → YTD vs año previo.
+    // 'Tiendas sin venta' es una foto del mes (no tiene acumulado): siempre va con YoY del mes.
+    let dLbl,dVal;
+    if(base==='MES'||k.noYtd){
+      dLbl='YoY mismo mes';
+      dVal=deltaHTML(curMes[k.key], yoyMes?yoyMes[k.key]:null, isPct, k.invert);
+    }else{
+      dLbl='YTD vs año previo';
+      dVal=deltaHTML(curYtd[k.key], yoyYtd?yoyYtd[k.key]:null, isPct, k.invert);
+    }
     el.innerHTML=`${k.hero?'<div class="hero-mark"></div>':''}
       <div class="k-label">${k.label}</div>
       <div class="k-val">${k.fmt(val)}</div>
       <div class="k-sub">${k.key==='cant'?k.sub+' · ≈ '+geDaily:k.sub+subExtra}</div>
       <div class="deltas">
-        <div class="delta"><span class="dl">YoY mismo mes</span>${yoyd}</div>
-        <div class="delta"><span class="dl">YTD vs YTD</span>${ytdd}</div>
+        <div class="delta"><span class="dl">${dLbl}</span>${dVal}</div>
       </div>`;
     box.appendChild(el);
   });
