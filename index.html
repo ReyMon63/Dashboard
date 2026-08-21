@@ -975,8 +975,32 @@ function renderYoY(){
   const o=baseOpts();o.scales.y.ticks.callback=fmtAxis(key);
   o.plugins.tooltip.callbacks={label:c=>c.dataset.label+': '+fmtVal(key)(c.parsed.y)};
   o.plugins.legend={display:true,position:'top',align:'end',labels:{boxWidth:10,boxHeight:10,usePointStyle:true,pointStyle:'rectRounded',color:mutedC(),font:{size:11}}};
+  // Línea punteada por año, a la altura de su PROMEDIO MENSUAL y en el color del año:
+  // el escalón entre líneas muestra visualmente el crecimiento año a año.
+  const avgLines={id:'avgLines',afterDatasetsDraw(ch){
+    const{ctx,chartArea:{left,right},scales:{y}}=ch;
+    const dss=ch.data.datasets; if(!dss.length)return;
+    // Promedio sobre MESES COMPARABLES: los mismos meses que ya lleva el año más reciente
+    // (YTD vs YTD), para que el escalón entre líneas sea crecimiento real y no efecto de meses faltantes.
+    const lastD=dss[dss.length-1].data;
+    const cmp=lastD.map((v,m)=>(v!=null&&!isNaN(v))?m:-1).filter(m=>m>=0);
+    if(!cmp.length)return;
+    const n=dss.length;
+    dss.forEach((ds,i)=>{
+      const vals=cmp.map(m=>ds.data[m]).filter(v=>v!=null&&!isNaN(v));
+      if(!vals.length)return;
+      const avg=vals.reduce((a,b)=>a+b,0)/vals.length, yy=y.getPixelForValue(avg);
+      ctx.save();ctx.strokeStyle=ds.backgroundColor;ctx.lineWidth=2;ctx.setLineDash([5,4]);
+      ctx.beginPath();ctx.moveTo(left,yy);ctx.lineTo(right,yy);ctx.stroke();
+      // etiqueta del año repartida en X (2024→izq … año actual→der) para que no se encimen cuando los promedios son cercanos
+      const lx=left+10+(right-left-46)*(n>1?i/(n-1):0);
+      ctx.setLineDash([]);ctx.fillStyle=ds.backgroundColor;ctx.font='700 10px system-ui,sans-serif';
+      ctx.textAlign='left';ctx.textBaseline='bottom';ctx.fillText(ds.label,lx,yy-3);
+      ctx.restore();
+    });
+  }};
   if(chYoY)chYoY.destroy();
-  chYoY=new Chart(document.getElementById('chYoY'),{type:'bar',data:{labels:MESL,datasets},options:o});
+  chYoY=new Chart(document.getElementById('chYoY'),{type:'bar',data:{labels:MESL,datasets},options:o,plugins:[avgLines]});
 }
 /* ============ opportunity + pareto ============ */
 function renderOpp(){
