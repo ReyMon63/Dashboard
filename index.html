@@ -446,7 +446,7 @@ datalist{color:#000}
           <button data-v="monto" class="active">Monto $</button>
           <button data-v="cant">Piezas</button>
           <button data-v="conv">Conversión</button>
-          <button data-v="alc">Alcance</button>
+          <button data-v="eleg">Elegibles</button>
           <button data-v="ticket">Ticket</button>
         </div>
       </div>
@@ -914,7 +914,7 @@ function renderTrend(){
   if(chTrend)chTrend.destroy();
   chTrend=new Chart(document.getElementById('chTrend'),{type:'line',data:{labels,datasets:ds},options:o,plugins:[selLine]});
   const lg=document.getElementById('trendLegend');lg.innerHTML=ds.map(d=>`<span><span class="dot" style="background:${d.borderColor}"></span>${d.label}</span>`).join('');
-  document.getElementById('trendPh').textContent=({monto:'Monto GE en pesos',cant:'Piezas de GE',conv:'Conversión (GE ÷ elegibles)',alc:'Alcance de plan (GE ÷ presupuesto)',ticket:'Ticket promedio por GE'})[key]+' · '+ (show.length>1?'por formato':(FNAME[show[0]]||'—'));
+  document.getElementById('trendPh').textContent=({monto:'Monto GE en pesos',cant:'Piezas de GE',conv:'Conversión (GE ÷ elegibles)',eleg:'Elegibles (clientes que aplican para GE)',ticket:'Ticket promedio por GE'})[key]+' · '+ (show.length>1?'por formato':(FNAME[show[0]]||'—'));
 }
 // Ajusta la rejilla tendencia/pastel ANTES de dibujar, para que la de tendencia
 // nazca con el ancho correcto (evita que quede expandida y el pastel se salga del cuadro).
@@ -975,24 +975,32 @@ function renderYoY(){
   const o=baseOpts();o.scales.y.ticks.callback=fmtAxis(key);
   o.plugins.tooltip.callbacks={label:c=>c.dataset.label+': '+fmtVal(key)(c.parsed.y)};
   o.plugins.legend={display:true,position:'top',align:'end',labels:{boxWidth:10,boxHeight:10,usePointStyle:true,pointStyle:'rectRounded',color:mutedC(),font:{size:11}}};
-  // Línea punteada por año, a la altura de su PROMEDIO MENSUAL y en el color del año:
-  // el escalón entre líneas muestra visualmente el crecimiento año a año.
+  // Línea punteada por año = su PROMEDIO MENSUAL del AÑO COMPLETO.
+  // Para el año en curso se proyecta el total anual con la estacionalidad del año previo (mismo formato),
+  // así ya se anticipa el impacto de Nov/Buen Fin que aún no ocurre → el escalón refleja crecimiento real.
+  const projAnnualAgg=(yy)=>{
+    const idxs=[]; for(let m=0;m<12;m++){const idx=MONTHS.indexOf(yy+'-'+String(m+1).padStart(2,'0')); if(idx>=0&&!isProjected(idx)) idxs.push({m,idx});}
+    if(!idxs.length) return null;
+    const lastM=idxs[idxs.length-1].m, complete=idxs.some(o=>o.m===11);
+    const cur=[0,0,0,0]; idxs.forEach(o=>{const a=aggAt(f,o.idx); for(let c=0;c<4;c++)cur[c]+=a[c];});
+    if(complete) return cur;                       // año completo: anual = real
+    const py=yy-1, proj=[0,0,0,0];                 // año en curso: proyectar con estacionalidad del año previo
+    for(let c=0;c<4;c++){let pFull=0,pYTD=0;
+      for(let m=0;m<12;m++){const idx=MONTHS.indexOf(py+'-'+String(m+1).padStart(2,'0')); if(idx<0)continue; const a=aggAt(f,idx); pFull+=a[c]; if(m<=lastM)pYTD+=a[c];}
+      const frac=pFull>0?pYTD/pFull:0; proj[c]= frac>0 ? cur[c]/frac : cur[c];
+    }
+    return proj;
+  };
+  const avgForKey=(A)=>{ if(!A)return null;
+    if(key==='monto')return A[0]/12; if(key==='cant')return A[1]/12; if(key==='eleg')return A[3]/12;
+    if(key==='conv')return A[3]?A[1]/A[3]:0; if(key==='alc')return A[2]?A[1]/A[2]:0; return null; };
+  datasets.forEach((ds,i)=>{ds.avgY=avgForKey(projAnnualAgg(years[i]));});
   const avgLines={id:'avgLines',afterDatasetsDraw(ch){
-    const{ctx,chartArea:{left,right},scales:{y}}=ch;
-    const dss=ch.data.datasets; if(!dss.length)return;
-    // Promedio sobre MESES COMPARABLES: los mismos meses que ya lleva el año más reciente
-    // (YTD vs YTD), para que el escalón entre líneas sea crecimiento real y no efecto de meses faltantes.
-    const lastD=dss[dss.length-1].data;
-    const cmp=lastD.map((v,m)=>(v!=null&&!isNaN(v))?m:-1).filter(m=>m>=0);
-    if(!cmp.length)return;
-    const n=dss.length;
-    dss.forEach((ds,i)=>{
-      const vals=cmp.map(m=>ds.data[m]).filter(v=>v!=null&&!isNaN(v));
-      if(!vals.length)return;
-      const avg=vals.reduce((a,b)=>a+b,0)/vals.length, yy=y.getPixelForValue(avg);
+    const{ctx,chartArea:{left,right},scales:{y}}=ch; const dss=ch.data.datasets; const n=dss.length;
+    dss.forEach((ds,i)=>{ if(ds.avgY==null||isNaN(ds.avgY))return;
+      const yy=y.getPixelForValue(ds.avgY);
       ctx.save();ctx.strokeStyle=ds.backgroundColor;ctx.lineWidth=2;ctx.setLineDash([5,4]);
       ctx.beginPath();ctx.moveTo(left,yy);ctx.lineTo(right,yy);ctx.stroke();
-      // etiqueta del año repartida en X (2024→izq … año actual→der) para que no se encimen cuando los promedios son cercanos
       const lx=left+10+(right-left-46)*(n>1?i/(n-1):0);
       ctx.setLineDash([]);ctx.fillStyle=ds.backgroundColor;ctx.font='700 10px system-ui,sans-serif';
       ctx.textAlign='left';ctx.textBaseline='bottom';ctx.fillText(ds.label,lx,yy-3);
