@@ -974,6 +974,7 @@ function renderYoY(){
   });
   const o=baseOpts();o.scales.y.ticks.callback=fmtAxis(key);
   o.plugins.tooltip.callbacks={label:c=>c.dataset.label+': '+fmtVal(key)(c.parsed.y)};
+  o.plugins.tooltip.filter=(it)=>it.raw!=null;   // no mostrar un año sin dato en ese mes (p. ej. 2026 en meses que aún no ocurren)
   o.plugins.legend={display:true,position:'top',align:'end',labels:{boxWidth:10,boxHeight:10,usePointStyle:true,pointStyle:'rectRounded',color:mutedC(),font:{size:11}}};
   // Línea punteada por año = su PROMEDIO MENSUAL del AÑO COMPLETO.
   // Para el año en curso se proyecta el total anual con la estacionalidad del año previo (mismo formato),
