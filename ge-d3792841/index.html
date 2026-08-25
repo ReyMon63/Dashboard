@@ -1250,7 +1250,7 @@ function buildMoversExcel(){
   const rows=[H];
   clsMovers.slice().sort((a,b)=>b.dir-a.dir||b.now-a.now).forEach(m=>{const s=storeByIdx[m.si];const g=segOf(m.si);const r=storeHistory(m.si)[mi];
     const monto=r?r[2]:0,cant=r?r[3]:0,meta=r?r[4]:0,el=r?r[5]:0;const conv=el?cant/el:0,alc=meta?cant/meta:0;const pr=proximaJS(m.si,mi);
-    rows.push([s.clave,s.n||'',FNAME[s.f],g.d,g.t,m.was+'★',m.now+'★',m.dir>0?'Subió':'Bajó',(m.now-m.was>0?'+':'')+(m.now-m.was),
+    rows.push([s.clave,s.n||'',FNAME[s.f],g.d,g.t,m.was+'★',m.now+'★',m.dir>0?'Ascendió':'Descendió',(m.now-m.was>0?'+':'')+(m.now-m.was),
       Math.round(monto),Math.round(cant),conv,alc,Math.round(el),pr?(pr.max?'Nivel máximo':pr.name):'',pr&&!pr.max?pr.how:'' ]);});
   const ws=XLSX.utils.aoa_to_sheet(rows);
   ws['!cols']=[{wch:8},{wch:28},{wch:14},{wch:9},{wch:16},{wch:12},{wch:12},{wch:10},{wch:8},{wch:14},{wch:10},{wch:11},{wch:9},{wch:11},{wch:14},{wch:46}];
