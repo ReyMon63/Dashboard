@@ -1,0 +1,661 @@
+<title>Matriz Maestra del Visor GE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#eef1f6; --surface:#ffffff; --surface-2:#f5f8fc; --surface-3:#eef3f9;
+  --ink:#14263f; --ink-soft:#33455f; --muted:#5b6b82; --faint:#8b99ac;
+  --border:#dbe2ec; --border-strong:#c6d1df;
+  --accent:#2a6fdb; --accent-ink:#1f4e79; --accent-wash:#e8f1fd;
+  --auto:#1c7a38; --auto-wash:#e5f4e9;
+  --manual:#a9701a; --manual-wash:#fbf1de;
+  --alta:#c0392b; --alta-wash:#fbe9e7;
+  --media:#a9701a; --baja:#6b7a90;
+  --cat-param:#2a6fdb; --cat-estrella:#7a52cf; --cat-pres:#0f8478;
+  --cat-datos:#2f8248; --cat-pub:#3f52ab; --cat-ui:#bd4f77; --cat-doc:#8a6234; --cat-pend:#64748b;
+  --shadow:0 1px 2px rgba(16,32,58,.06),0 8px 24px -14px rgba(16,32,58,.28);
+  --shadow-lg:0 30px 70px -34px rgba(16,32,58,.45);
+  --radius:14px;
+}
+:root:not([data-theme="light"]){}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0a121e; --surface:#101c2e; --surface-2:#0d1826; --surface-3:#132339;
+    --ink:#e9f0fb; --ink-soft:#c3d1e5; --muted:#94a6bf; --faint:#6d7f97;
+    --border:#22324a; --border-strong:#2c3f5c;
+    --accent:#5aa2ff; --accent-ink:#a8caff; --accent-wash:#14243c;
+    --auto:#4fc27a; --auto-wash:#12271b;
+    --manual:#e6ad4e; --manual-wash:#2c2314;
+    --alta:#f2776b; --alta-wash:#2e1613; --media:#e6ad4e; --baja:#8496ae;
+    --cat-param:#5aa2ff; --cat-estrella:#b393f2; --cat-pres:#3fc0b2;
+    --cat-datos:#5fc47e; --cat-pub:#8296f0; --cat-ui:#e786ab; --cat-doc:#c79a63; --cat-pend:#93a3b8;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -16px rgba(0,0,0,.7);
+    --shadow-lg:0 34px 80px -30px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0a121e; --surface:#101c2e; --surface-2:#0d1826; --surface-3:#132339;
+  --ink:#e9f0fb; --ink-soft:#c3d1e5; --muted:#94a6bf; --faint:#6d7f97;
+  --border:#22324a; --border-strong:#2c3f5c;
+  --accent:#5aa2ff; --accent-ink:#a8caff; --accent-wash:#14243c;
+  --auto:#4fc27a; --auto-wash:#12271b;
+  --manual:#e6ad4e; --manual-wash:#2c2314;
+  --alta:#f2776b; --alta-wash:#2e1613; --media:#e6ad4e; --baja:#8496ae;
+  --cat-param:#5aa2ff; --cat-estrella:#b393f2; --cat-pres:#3fc0b2;
+  --cat-datos:#5fc47e; --cat-pub:#8296f0; --cat-ui:#e786ab; --cat-doc:#c79a63; --cat-pend:#93a3b8;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -16px rgba(0,0,0,.7);
+  --shadow-lg:0 34px 80px -30px rgba(0,0,0,.8);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:15.5px; line-height:1.6; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1080px; margin:0 auto; padding:0 20px 80px}
+.mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+
+/* ---------- top bar ---------- */
+.topbar{position:sticky; top:0; z-index:40; background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-bottom:1px solid var(--border)}
+.topbar-in{max-width:1080px; margin:0 auto; padding:12px 20px; display:flex; align-items:center; gap:14px}
+.brand{display:flex; align-items:center; gap:11px; min-width:0}
+.brand .glyph{flex:none; width:34px; height:34px; border-radius:9px; display:grid; place-items:center;
+  background:linear-gradient(155deg,var(--accent),var(--accent-ink)); color:#fff; font-size:18px;
+  box-shadow:0 6px 16px -8px var(--accent)}
+.brand h1{margin:0; font-size:16px; font-weight:700; letter-spacing:-.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.brand .sub{font-size:11.5px; color:var(--muted); font-weight:500}
+.spacer{flex:1}
+.tgl{flex:none; border:1px solid var(--border-strong); background:var(--surface); color:var(--ink-soft);
+  width:38px; height:34px; border-radius:9px; cursor:pointer; display:grid; place-items:center; font-size:15px}
+.tgl:hover{border-color:var(--accent); color:var(--accent)}
+
+/* ---------- hero ---------- */
+.hero{padding:42px 0 26px}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--accent-ink); font-weight:600; margin-bottom:14px}
+:root[data-theme="dark"] .eyebrow,:root:not([data-theme="light"]) .eyebrow{color:var(--accent)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .eyebrow{color:var(--accent-ink)}}
+.hero h2{margin:0 0 14px; font-size:clamp(28px,5vw,42px); line-height:1.08; font-weight:700;
+  letter-spacing:-.02em; text-wrap:balance; max-width:16ch}
+.hero p{margin:0; max-width:60ch; color:var(--ink-soft); font-size:16.5px}
+.hero .stamp{margin-top:18px; font-size:12.5px; color:var(--faint); font-family:"IBM Plex Mono",monospace}
+
+/* ---------- stat tiles ---------- */
+.tiles{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:8px 0 6px}
+@media(max-width:640px){.tiles{grid-template-columns:repeat(2,1fr)}}
+.tile{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 16px 14px; box-shadow:var(--shadow)}
+.tile .n{font-size:30px; font-weight:700; letter-spacing:-.02em; font-variant-numeric:tabular-nums; line-height:1}
+.tile .l{margin-top:7px; font-size:12.5px; color:var(--muted); line-height:1.35}
+.tile.warn .n{color:var(--manual)}
+.tile.warn{border-color:color-mix(in srgb,var(--manual) 35%,var(--border))}
+
+/* ---------- section headings ---------- */
+.sec{margin-top:52px}
+.sec-h{display:flex; align-items:baseline; gap:12px; margin-bottom:6px}
+.sec-h h3{margin:0; font-size:20px; font-weight:700; letter-spacing:-.01em}
+.sec-h .k{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--faint)}
+.sec-lede{color:var(--muted); font-size:14.5px; max-width:64ch; margin:0 0 18px}
+
+/* ---------- pipeline ---------- */
+.pipe-scroll{overflow-x:auto; padding:6px 2px 12px; margin:0 -2px}
+.pipe{display:flex; align-items:stretch; gap:0; min-width:760px}
+.pnode{flex:1; min-width:120px; background:var(--surface); border:1px solid var(--border); border-radius:11px;
+  padding:12px 13px; box-shadow:var(--shadow); position:relative}
+.pnode + .pnode{margin-left:26px}
+.pnode + .pnode::before{content:"→"; position:absolute; left:-22px; top:50%; transform:translateY(-50%);
+  color:var(--faint); font-size:16px}
+.pnode .pt{font-size:10.5px; font-family:"IBM Plex Mono",monospace; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); font-weight:600}
+.pnode .pn{font-weight:600; font-size:13.5px; margin-top:3px}
+.pnode .pd{font-size:11.5px; color:var(--muted); margin-top:4px; line-height:1.4}
+.pipe-note{font-size:12.5px; color:var(--faint); margin-top:6px}
+
+/* ---------- controls ---------- */
+.controls{position:sticky; top:59px; z-index:30; background:color-mix(in srgb,var(--bg) 90%,transparent);
+  backdrop-filter:blur(8px); padding:14px 0 12px; margin-bottom:4px}
+.search{position:relative}
+.search input{width:100%; padding:12px 14px 12px 40px; border-radius:11px; border:1px solid var(--border-strong);
+  background:var(--surface); color:var(--ink); font-size:15px; font-family:inherit; outline:none; box-shadow:var(--shadow)}
+.search input:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-wash)}
+.search svg{position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--faint)}
+.chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:11px}
+.chip{border:1px solid var(--border-strong); background:var(--surface); color:var(--ink-soft);
+  padding:6px 12px; border-radius:999px; font-size:12.5px; font-weight:500; cursor:pointer; white-space:nowrap;
+  display:inline-flex; align-items:center; gap:7px; transition:all .12s}
+.chip .dot{width:8px; height:8px; border-radius:50%; background:var(--c,var(--accent))}
+.chip:hover{border-color:var(--accent)}
+.chip.on{background:var(--ink); color:var(--surface); border-color:var(--ink)}
+.chip.on .dot{background:var(--surface)}
+.chip.all.on{background:var(--accent); border-color:var(--accent); color:#fff}
+.countline{font-size:12.5px; color:var(--muted); margin-top:11px; font-family:"IBM Plex Mono",monospace}
+
+/* ---------- matrix cards ---------- */
+.cards{display:flex; flex-direction:column; gap:12px}
+.card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
+.card.hidden{display:none}
+.card-head{display:flex; align-items:flex-start; gap:13px; padding:16px 17px; cursor:pointer; position:relative}
+.card-head:hover{background:var(--surface-2)}
+.strip{position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--crit,var(--baja))}
+.card-head .body{flex:1; min-width:0; padding-left:4px}
+.card-title-row{display:flex; align-items:center; gap:9px; flex-wrap:wrap}
+.card h4{margin:0; font-size:16.5px; font-weight:650; letter-spacing:-.01em; line-height:1.25}
+.catchip{font-size:10.5px; font-weight:600; padding:2.5px 8px; border-radius:6px; white-space:nowrap;
+  color:var(--cc); background:color-mix(in srgb,var(--cc) 13%,transparent); font-family:"IBM Plex Mono",monospace; letter-spacing:.04em}
+.crit-tag{font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:2px 7px; border-radius:5px}
+.crit-alta{color:var(--alta); background:var(--alta-wash)}
+.crit-media{color:var(--media); background:var(--manual-wash)}
+.crit-baja{color:var(--baja); background:var(--surface-3)}
+.card .what{margin:7px 0 0; font-size:13.5px; color:var(--ink-soft); line-height:1.5}
+.card .srcline{margin:9px 0 0; font-size:12.5px; color:var(--muted); display:flex; gap:7px; align-items:baseline}
+.card .srcline b{color:var(--ink-soft); font-weight:600}
+.exp{flex:none; align-self:center; color:var(--faint); transition:transform .2s; font-size:13px; margin-top:2px}
+.card.open .exp{transform:rotate(90deg)}
+.detail{display:none; padding:2px 17px 18px 21px; border-top:1px solid var(--border)}
+.card.open .detail{display:block}
+.detail .dh{font-size:11px; font-family:"IBM Plex Mono",monospace; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--faint); margin:15px 0 9px; font-weight:600}
+.locs{display:flex; flex-direction:column; gap:7px}
+.loc{display:flex; align-items:flex-start; gap:10px; padding:9px 11px; background:var(--surface-2); border:1px solid var(--border); border-radius:9px}
+.loc .lwhere{flex:1; min-width:0}
+.loc .lpath{font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--ink); font-weight:500; word-break:break-word}
+.loc .lnote{font-size:12px; color:var(--muted); margin-top:2px}
+.badge{flex:none; font-size:10.5px; font-weight:600; padding:3px 8px; border-radius:6px; white-space:nowrap; margin-top:1px}
+.b-auto{color:var(--auto); background:var(--auto-wash)}
+.b-manual{color:var(--manual); background:var(--manual-wash)}
+.b-source{color:var(--accent-ink); background:var(--accent-wash)}
+:root[data-theme="dark"] .b-source,:root:not([data-theme="light"]) .b-source{color:var(--accent)}
+.impact{margin-top:15px; padding:12px 14px; border-radius:10px; background:var(--accent-wash);
+  border:1px solid color-mix(in srgb,var(--accent) 22%,transparent)}
+.impact .ih{font-size:11px; font-family:"IBM Plex Mono",monospace; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--accent-ink); font-weight:700; margin-bottom:5px; display:flex; align-items:center; gap:6px}
+:root[data-theme="dark"] .impact .ih,:root:not([data-theme="light"]) .impact .ih{color:var(--accent)}
+.impact p{margin:0; font-size:13.5px; color:var(--ink-soft); line-height:1.5}
+
+/* ---------- registry table ---------- */
+.tbl-scroll{overflow-x:auto; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow)}
+table{border-collapse:collapse; width:100%; min-width:620px; background:var(--surface)}
+th,td{text-align:left; padding:11px 14px; font-size:13px; border-bottom:1px solid var(--border); vertical-align:top}
+th{background:var(--surface-2); font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); font-weight:600; position:sticky; top:0}
+tr:last-child td{border-bottom:0}
+td .mono{font-size:12px; color:var(--ink-soft)}
+td.k{font-weight:600}
+.pill{font-size:10.5px; font-weight:600; padding:2px 8px; border-radius:6px; color:var(--cc,var(--muted)); background:color-mix(in srgb,var(--cc,var(--muted)) 13%,transparent); font-family:"IBM Plex Mono",monospace}
+
+/* ---------- pending ---------- */
+.pend{background:var(--surface); border:1px dashed var(--border-strong); border-radius:12px; padding:18px 20px; box-shadow:var(--shadow)}
+.pend h4{margin:0 0 6px; font-size:16px}
+.pend p{margin:0 0 10px; color:var(--ink-soft); font-size:14px}
+.pend ul{margin:0; padding-left:18px; color:var(--ink-soft); font-size:13.5px}
+.pend li{margin:4px 0}
+
+/* ---------- footer ---------- */
+.foot{margin-top:56px; padding-top:22px; border-top:1px solid var(--border); color:var(--faint); font-size:12.5px; line-height:1.7}
+.foot b{color:var(--muted)}
+.legend{display:flex; flex-wrap:wrap; gap:14px; margin:14px 0 4px; font-size:12px}
+.legend span{display:inline-flex; align-items:center; gap:6px; color:var(--muted)}
+.legend i{width:11px; height:11px; border-radius:3px; display:inline-block}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:6px}
+</style>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <div class="glyph">🧭</div>
+      <div style="min-width:0">
+        <h1>Matriz Maestra · Visor GE</h1>
+        <div class="sub">Mapa de dependencias del proyecto</div>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <button class="tgl" id="themeBtn" aria-label="Cambiar tema">◑</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="eyebrow">Centro de orientación del proyecto</div>
+    <h2>Si cambias algo, aquí ves a qué le pega.</h2>
+    <p>Este es el mapa único del Visor Ejecutivo de Garantías Extendidas (Grupo Walmart): cada dato, término, parámetro y enlace del proyecto, con <b>dónde vive</b> y su <b>radio de impacto</b>. La idea es simple: antes de tocar algo, míralo aquí y sabrás qué otros archivos o documentos hay que ajustar — para no volver a descubrir “a pedazos” que faltaba cambiarlo en otro lado.</p>
+    <div class="stamp">Auditoría al 27 de agosto de 2026 · reconstruida desde archivos, código, GitHub y notas</div>
+  </header>
+
+  <div class="tiles" id="tiles"></div>
+
+  <section class="sec">
+    <div class="sec-h"><h3>Cómo se arma y publica el visor</h3><span class="k">flujo</span></div>
+    <p class="sec-lede">El recorrido completo, de tus insumos hasta la página en línea. Todo lo dispara un solo comando: <span class="mono">./run_local.sh --force</span>.</p>
+    <div class="pipe-scroll">
+      <div class="pipe">
+        <div class="pnode"><div class="pt">Insumos</div><div class="pn">Avance · Parámetros · Segmentación</div><div class="pd">Tus 3 archivos vivos (Descargas + Drive).</div></div>
+        <div class="pnode"><div class="pt">Parámetros</div><div class="pn">read_params.py</div><div class="pd">Lee Parámetros Base → params.json (fuente de verdad).</div></div>
+        <div class="pnode"><div class="pt">Cálculo</div><div class="pn">stars · recompute · daily</div><div class="pd">Estrellas, presupuesto/segmentación y proyección del mes.</div></div>
+        <div class="pnode"><div class="pt">Armado</div><div class="pn">build_visor + gate</div><div class="pd">Une plantilla + datos + login en index.html.</div></div>
+        <div class="pnode"><div class="pt">Publica</div><div class="pn">GitHub Pages</div><div class="pd">git push → URL secreta ge-d3792841.</div></div>
+      </div>
+    </div>
+    <p class="pipe-note">Al <b>cerrar un mes</b> se suman dos pasos extra: actualizar los <b>Históricos (con estrellas)</b> y regenerar la <b>Evaluación de Tiendas</b> en Drive.</p>
+  </section>
+
+  <section class="sec">
+    <div class="sec-h"><h3>Matriz de dependencias</h3><span class="k">el corazón</span></div>
+    <p class="sec-lede">Busca o filtra por categoría. Toca cada tarjeta para ver todas sus ubicaciones y el radio de impacto. La etiqueta <span class="badge b-auto" style="display:inline">se actualiza solo</span> significa que el pipeline lo recalcula; <span class="badge b-manual" style="display:inline">a mano</span> significa que hay que editarlo tú.</p>
+
+    <div class="controls">
+      <div class="search">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="q" type="search" placeholder="Buscar: estrellas, conversión, token, Instructivo, Sam's…" autocomplete="off">
+      </div>
+      <div class="chips" id="chips"></div>
+      <div class="countline" id="count"></div>
+    </div>
+
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section class="sec">
+    <div class="sec-h"><h3>Enlaces, archivos y credenciales</h3><span class="k">registro</span></div>
+    <p class="sec-lede">Dónde vive cada pieza: URLs, IDs estables de Google Drive y dónde se guardan las llaves. Los IDs no cambian aunque renombres el archivo — solo si lo borras y vuelves a subir.</p>
+    <div class="tbl-scroll">
+      <table id="reg">
+        <thead><tr><th>Pieza</th><th>Tipo</th><th>Ubicación / referencia</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="sec-h"><h3>Pendiente reservado</h3><span class="k">siguiente nivel</span></div>
+    <div class="pend">
+      <h4>Dominio propio + login real (Netlify)</h4>
+      <p>El plan guardado para dar el salto “profesional”: mover el visor a un dominio tuyo (sin github/netlify a la vista) y un login real por invitación por correo.</p>
+      <ul>
+        <li>Comprar dominio (ej. Cloudflare Registrar) y usar un subdominio tipo <span class="mono">visor.midominio.com</span>.</li>
+        <li>Hospedar en Netlify + activar Netlify Identity (registro solo por invitación).</li>
+        <li>Conectar el dominio por DNS (CNAME) y dejar la URL secreta actual como respaldo.</li>
+      </ul>
+      <p style="margin-top:10px; font-size:12.5px; color:var(--faint)">Guardado en la nota <b>“PENDIENTE — Visor GE: dominio + login Netlify”</b> y en el archivo de guía. Frase para reactivarlo: <i>“montemos el login de Netlify”</i>.</p>
+    </div>
+  </section>
+
+  <div class="foot">
+    <div class="legend">
+      <span><i style="background:var(--auto)"></i> se actualiza solo (el pipeline lo recalcula)</span>
+      <span><i style="background:var(--manual)"></i> a mano (hay que editarlo)</span>
+      <span><i style="background:var(--accent)"></i> fuente de verdad</span>
+    </div>
+    <b>Fuente de verdad del proyecto:</b> los archivos en tu Mac (<span class="mono">Desktop/Proyectos/visor_bot</span>), el repo <span class="mono">ReyMon63/Dashboard</span> y los insumos en Google Drive. Esta matriz es un mapa de esos elementos, no los sustituye.<br>
+    Documento vivo · si cambia la estructura del proyecto, se actualiza esta matriz.
+  </div>
+</div>
+
+<script>
+const CATS={
+  param:{label:"Parámetros",c:"var(--cat-param)"},
+  estrella:{label:"Estrellas",c:"var(--cat-estrella)"},
+  pres:{label:"Presupuesto",c:"var(--cat-pres)"},
+  datos:{label:"Datos e insumos",c:"var(--cat-datos)"},
+  pub:{label:"Publicación",c:"var(--cat-pub)"},
+  ui:{label:"Textos y UI",c:"var(--cat-ui)"},
+  doc:{label:"Documentos",c:"var(--cat-doc)"},
+};
+// auto: true=se actualiza solo · false=a mano · "source"=fuente de verdad
+const A_AUTO=true, A_MAN=false, A_SRC="source";
+const DATA=[
+ {id:"nombres", cat:"estrella", crit:"alta", name:"Nombres cortos de las estrellas",
+  what:"Las etiquetas Vende · Crece · Cumple · Constancia · Eficiencia. NO hay una sola fuente: están escritas a mano en varios archivos, por eso es el punto más delicado (es justo el que ya nos mordió).",
+  src:"Escritas a mano en cada archivo (sin fuente única)",
+  locs:[
+   {p:"engine/dashboard_template.html", n:"CRITSHORT (L912), PROXNAME (L914) y el texto largo CRIT (L911)", a:A_MAN},
+   {p:"engine/dashboard_ejecutivo_template.html", n:"CRITSHORT (L773), PROXNAME (L775), CRIT (L772)", a:A_MAN},
+   {p:"engine/build_evaluacion.py", n:"PROXNAME, SHORT y la hoja «Leyenda» del Excel de Evaluación", a:A_MAN},
+   {p:"Instructivo_Visor_GE.html (Drive)", n:"Sección «Los 5 logros»", a:A_MAN},
+   {p:"Instructivo_Visor_GE.html (2 copias en Descargas)", n:"Mismos 5 logros", a:A_MAN},
+   {p:"visitas-diarias/index.html", n:"CRITERIO_NOMBRES (proyecto aparte, no montado aquí)", a:A_MAN},
+  ],
+  impact:"Cambiar un nombre corto obliga a tocar 6 lugares. Si alguno se olvida, vuelve a aparecer el término viejo. Regla: cambiar los 5 nombres SIEMPRE en los 3 archivos del motor + las 3 copias del Instructivo + la app de visitas."},
+
+ {id:"criterios", cat:"estrella", crit:"alta", name:"Definición de los 5 criterios (la lógica)",
+  what:"Qué se necesita para ganar cada estrella: ≥12 GE en 12 meses, no decrecer (trimestre vs. año previo), cumplir la suma de metas, cumplir meta en ≥10 meses, y ≥80% de la conversión objetivo.",
+  src:"engine/stars.py — funciones c1…c5 (la regla real que decide)",
+  locs:[
+   {p:"engine/stars.py", n:"Lógica real de los criterios c1–c5 y el nivel", a:A_SRC},
+   {p:"dashboard_template.html + ejecutivo", n:"Texto largo CRIT que describe cada criterio", a:A_MAN},
+   {p:"engine/build_evaluacion.py", n:"proxima(): los textos de «cómo lograr» cada estrella + Leyenda", a:A_MAN},
+   {p:"Instructivo_Visor_GE.html", n:"Explicación de los 5 logros para el usuario", a:A_MAN},
+  ],
+  impact:"Si cambias un umbral (ej. de 12 a 15 GE, o de 10 a 9 meses), cambia la lógica en stars.py Y todas las descripciones que lo mencionan (plantillas, Evaluación, Instructivo). El número y su explicación deben ir siempre juntos."},
+
+ {id:"conv", cat:"param", crit:"alta", name:"Conversión objetivo (WM 20% · BA 7% · SC 15%)",
+  what:"El % de oportunidades que cada formato debería convertir en GE. Alimenta el criterio de «Eficiencia», la brecha del presupuesto y la Evaluación.",
+  src:"Parámetros Base.xlsx → hoja «Conversión objetivo» → params.json (conv_target)",
+  locs:[
+   {p:"Parámetros Base.xlsx › «Conversión objetivo»", n:"El número que manda", a:A_SRC},
+   {p:"stars.py · recompute_all.py · build_evaluacion.py", n:"Lo usan para calcular estrellas, presupuesto y Evaluación", a:A_AUTO},
+   {p:"dashboard_template.html (ayuda y método, ~L876–986)", n:"Texto «WM 20% · BA 7% · SC 15%» escrito a mano", a:A_MAN},
+   {p:"build_evaluacion.py › hoja «Leyenda»", n:"Repite «WM 20% · BA 7% · SC 15%»", a:A_MAN},
+   {p:"Instructivo_Visor_GE.html", n:"Glosario de conversión", a:A_MAN},
+  ],
+  impact:"Si cambias un % en el Excel, el CÁLCULO se actualiza solo — pero los TEXTOS que lo mencionan (ayuda del visor, Leyenda del Excel de Evaluación, Instructivo) NO. Hay que editarlos a mano para que no quede un número viejo a la vista."},
+
+ {id:"piso", cat:"param", crit:"media", name:"Meta mínima / piso por formato (WM 146 · BA 73 · SC 122)",
+  what:"El piso anual de GE por tienda (dividido entre 12 da el piso mensual). Sube en mayo y noviembre por el evento del formato.",
+  src:"Parámetros Base.xlsx → hoja «Meta mínima por formato» → params.json (floor)",
+  locs:[
+   {p:"Parámetros Base.xlsx › «Meta mínima por formato»", n:"El número que manda", a:A_SRC},
+   {p:"engine/recompute_all.py", n:"Aplica el piso al presupuesto mensual", a:A_AUTO},
+   {p:"dashboard_template.html › método del presupuesto", n:"Menciona los pisos (texto hoy oculto)", a:A_MAN},
+  ],
+  impact:"Cambiar el piso en el Excel actualiza el presupuesto solo. El único eco manual es el texto del método (que ya está oculto), así que el riesgo es bajo."},
+
+ {id:"growth", cat:"param", crit:"media", name:"Crecimiento objetivo (10%)",
+  what:"El crecimiento anual que debe alcanzar cada formato. Con él se calibra el %FB (cuánto de la brecha se le pide a cada tienda).",
+  src:"Parámetros Base.xlsx → hoja «Generales» → params.json (growth)",
+  locs:[
+   {p:"Parámetros Base.xlsx › «Generales»", n:"El número que manda", a:A_SRC},
+   {p:"engine/recompute_all.py", n:"Calibra el %FB por formato para llegar al objetivo", a:A_AUTO},
+   {p:"dashboard_template.html › método", n:"Muestra el % (se rellena solo desde los datos)", a:A_AUTO},
+  ],
+  impact:"Se cambia solo desde el Excel y todo lo demás se recalcula. Sin ecos manuales que cuidar."},
+
+ {id:"alpha", cat:"param", crit:"baja", name:"Suavizado de estacionalidad (alpha = 0.45)",
+  what:"Qué tanto pesa la estacionalidad del formato vs. un reparto plano al distribuir la meta mes a mes.",
+  src:"Parámetros Base.xlsx → hoja «Generales» → params.json (alpha)",
+  locs:[
+   {p:"Parámetros Base.xlsx › «Generales»", n:"El valor que manda", a:A_SRC},
+   {p:"engine/recompute_all.py", n:"store_w(): mezcla estacionalidad + plano", a:A_AUTO},
+  ],
+  impact:"Interno del reparto mensual. Se cambia desde el Excel y se recalcula solo."},
+
+ {id:"eventos", cat:"param", crit:"media", name:"Meses de evento (mayo y noviembre)",
+  what:"Los dos meses «pico» que reciben trato especial en el presupuesto y el piso (ventas reales del mes en vez de reparto).",
+  src:"⚠ Escrito en el CÓDIGO, no en el Excel: read_params.py (event_months = [5,11])",
+  locs:[
+   {p:"engine/read_params.py", n:"event_months = [5,11] — fijo en el código", a:A_SRC},
+   {p:"engine/recompute_all.py", n:"Trata mayo/nov como evento", a:A_AUTO},
+   {p:"dashboard_template.html + Instructivo", n:"Texto «mayo y noviembre»", a:A_MAN},
+  ],
+  impact:"Ojo: los meses de evento NO están en el Excel de parámetros, están escritos en read_params.py. Cambiarlos exige editar el código Y los textos que dicen «mayo y noviembre». Es la excepción a «todo se controla desde el Excel»."},
+
+ {id:"implant", cat:"param", crit:"media", name:"Implants por formato (nombres)",
+  what:"El nombre del Implant (supervisor de un solo formato) que se usa como responsable por defecto en la segmentación. Los Implants sí fijan el FORMATO en el visor; los Territoriales no.",
+  src:"Parámetros Base.xlsx → hoja «Implant por formato» → params.json (implant)",
+  locs:[
+   {p:"Parámetros Base.xlsx › «Implant por formato»", n:"Los nombres que mandan", a:A_SRC},
+   {p:"engine/recompute_all.py", n:"Segmentación + DB['implants'] (relación nombre→formato)", a:A_AUTO},
+  ],
+  impact:"Se cambia desde el Excel. Recuerda la regla: Implant = 1 formato (sí fija formato); Territorial = 3 formatos (no lo fija)."},
+
+ {id:"usuarios", cat:"pub", crit:"alta", name:"Usuarios y accesos (login del visor)",
+  what:"Quién puede entrar al visor. Cada clave se guarda cifrada (SHA-256) y se inyecta en la pantalla de acceso.",
+  src:"Parámetros Base.xlsx → hoja «Usuarios» → read_params.py (cifra) → gate",
+  locs:[
+   {p:"Parámetros Base.xlsx › «Usuarios»", n:"Nombre + clave de cada persona (la lista real)", a:A_SRC},
+   {p:"engine/read_params.py", n:"Convierte cada clave a hash SHA-256", a:A_AUTO},
+   {p:"engine/gate_script.html", n:"Recibe los hashes (__HASHES__) y valida el login", a:A_AUTO},
+  ],
+  impact:"Para DAR o QUITAR acceso: editas la hoja «Usuarios» del Excel y republicas. No se toca código. (Así fue como quitamos a Manolo y Miros.)"},
+
+ {id:"starfactor", cat:"pres", crit:"media", name:"Factor por estrellas del presupuesto",
+  what:"Cuánta brecha se le pide a cada tienda según sus estrellas: 0–1★ nada (van al piso), 2★ el 80%, 3–5★ el 100%. Sam's reparte distinto (entre todas sus tiendas).",
+  src:"engine/recompute_all.py — star_factor()",
+  locs:[
+   {p:"engine/recompute_all.py", n:"star_factor(): 0-1→0, 2→0.80, 3-5→1.0 (SC exento)", a:A_SRC},
+   {p:"dashboard_template.html › método", n:"Texto «★3-5 100%, ★2 80%, ★0-1 nada» (hoy oculto)", a:A_MAN},
+  ],
+  impact:"Si cambias la modulación (ej. que 2★ pida 90%), edita recompute_all.py y, si vuelves a mostrar el texto del método, ajústalo también."},
+
+ {id:"budget3", cat:"pres", crit:"baja", name:"Presupuesto sugerido (budget3 / %FB)",
+  what:"El objeto con la meta anual y mensual por tienda + el %FB calibrado por formato. Es un RESULTADO calculado, no algo que se escriba a mano.",
+  src:"Calculado por recompute_all.py → guardado en data.json (budget3)",
+  locs:[
+   {p:"engine/recompute_all.py", n:"Construye budget3 con params, fb y metas", a:A_AUTO},
+   {p:"data.json", n:"Guarda budget3", a:A_AUTO},
+   {p:"dashboard_template.html", n:"Lo consume (referencias «BUD3»)", a:A_AUTO},
+  ],
+  impact:"No se toca directo: cambia solo si cambian sus insumos (conversión, piso, crecimiento, estrellas). El texto explicativo al pie ya se quitó por tu pedido."},
+
+ {id:"closed", cat:"datos", crit:"alta", name:"Meses cerrados (data_closed.json)",
+  what:"La memoria histórica de meses ya cerrados (hoy: enero-2024 → julio-2026, 31 meses, 1 675 tiendas). El visor se arma sobre esta base + la proyección del mes en curso.",
+  src:"Repo: data_closed.json (fuente de verdad de lo cerrado)",
+  locs:[
+   {p:"visor_bot/data_closed.json", n:"Base de meses cerrados; se versiona en GitHub", a:A_SRC},
+   {p:"engine/run.py", n:"Al cerrar mes, congela el mes en curso aquí (rollover)", a:A_AUTO},
+  ],
+  impact:"Es delicado: es el histórico oficial. No se edita a mano; lo actualiza el pipeline al detectar el cierre de mes. Un error aquí afecta todo el visor."},
+
+ {id:"avance", cat:"datos", crit:"alta", name:"Avance de Ventas.xlsx",
+  what:"El acumulado del mes en curso. De aquí sale la proyección del mes que aún no cierra.",
+  src:"Descargas/Avance de Ventas.xlsx (copia viva) · Drive «Avance Ventas Bot» (id 1WWTd…)",
+  locs:[
+   {p:"/Users/reymon/Downloads/Avance de Ventas.xlsx", n:"El que usa run_local.sh como insumo", a:A_SRC},
+   {p:"engine/daily_update.py", n:"Proyecta el mes en curso (factor = días del mes / día de corte)", a:A_AUTO},
+  ],
+  impact:"Es el insumo diario. Si su formato de columnas cambia, hay que revisar daily_update.py y run.py (leen venta, elegibles, plan y GE por hoja WM/BA/SMC)."},
+
+ {id:"parambase", cat:"datos", crit:"alta", name:"Parámetros Base.xlsx",
+  what:"El «tablero de control» del proyecto: conversión, pisos, implants, usuarios, crecimiento y alpha. Casi todo se ajusta desde aquí.",
+  src:"Google Drive › «Visor Ejecutivo» (id 1Wwnk…)",
+  locs:[
+   {p:"Drive › Visor Ejecutivo › Parámetros Base.xlsx", n:"Hojas: Conversión objetivo, Meta mínima, Implant, Usuarios, Generales", a:A_SRC},
+   {p:"engine/read_params.py", n:"Lee todas las hojas → params.json", a:A_AUTO},
+  ],
+  impact:"Es tu panel principal. Cambiar aquí (y republicar) mueve el cálculo sin tocar código. Excepción: los meses de evento (esos viven en el código)."},
+
+ {id:"segmentacion", cat:"datos", crit:"media", name:"Segmentación.xlsx",
+  what:"Qué distrito y qué territorial/implant le toca a cada tienda, por formato.",
+  src:"Drive «Avance Ventas Bot» (id 1ATT…) · o copia en visor_bot/assets/Segmentacion.xlsx",
+  locs:[
+   {p:"Drive › Avance Ventas Bot › Segmentación.xlsx", n:"Hojas «Distritos {formato}» y «Territoriales {formato}»", a:A_SRC},
+   {p:"engine/recompute_all.py", n:"Arma la segmentación (distrito/territorial) por tienda", a:A_AUTO},
+  ],
+  impact:"Si cambia un distrito o territorial, se refleja al reconstruir. Cuida que los nombres de hoja sigan siendo «Distritos WM/BA/SC» y «Territoriales WM/BA/SC»."},
+
+ {id:"historicos", cat:"datos", crit:"media", name:"Históricos WM/BA/SC (con estrellas).xlsx",
+  what:"El registro mes a mes por formato, con las 5 columnas de estrellas (E1–E5) y el cambio de nivel. Se actualiza al cerrar mes.",
+  src:"Drive › «Visor Ejecutivo» (ids 1GXMD… / 13_kK… / 1PV2k…)",
+  locs:[
+   {p:"Drive › Visor Ejecutivo › Histórico WM/BA/SC (con estrellas).xlsx", n:"Un archivo por formato", a:A_SRC},
+   {p:"engine/append_hist_month.py", n:"Agrega la hoja del mes recién cerrado (usa HIST_DIR)", a:A_AUTO},
+   {p:"engine/refresh_hist_stars.py", n:"Recalcula/repara las estrellas históricas si hace falta", a:A_AUTO},
+  ],
+  impact:"Los actualiza el pipeline solo al cerrar mes (si HIST_DIR apunta a la carpeta de Drive). Si mueves esa carpeta, hay que actualizar la ruta en run_local.sh."},
+
+ {id:"evaluacion", cat:"datos", crit:"media", name:"Evaluación de Tiendas.xlsx",
+  what:"Por tienda: nivel de estrellas, los 5 criterios (✓/✗), la próxima estrella y cómo lograrla. Una hoja por formato + Leyenda.",
+  src:"Drive (id 1BPuu…) · generado por build_evaluacion.py y subido por OAuth",
+  locs:[
+   {p:"engine/build_evaluacion.py", n:"Genera el Excel y lo sube a Drive (id fijo)", a:A_AUTO},
+   {p:"credenciales avance_ventas_bot (token.json + credentials.json)", n:"OAuth de Drive para subirlo", a:A_MAN},
+  ],
+  impact:"Se regenera en cada corrida. Si el archivo de Drive se borra/re-crea, hay que actualizar su id en build_evaluacion.py (EVAL_DRIVE_ID)."},
+
+ {id:"repo", cat:"pub", crit:"alta", name:"Repositorio GitHub (ReyMon63/Dashboard)",
+  what:"Donde se publica el visor (GitHub Pages). Es tu «servidor». Todo el proyecto de publicación vive aquí.",
+  src:"github.com/ReyMon63/Dashboard — rama main",
+  locs:[
+   {p:"engine/run.py", n:"git add/commit/push a la rama main", a:A_AUTO},
+   {p:"visor_bot/ (carpeta local)", n:"Es a la vez el repo local que se sincroniza", a:A_SRC},
+  ],
+  impact:"Es la infraestructura. Publicar = git push desde esta carpeta (necesita el token). Corre mejor «En tu computadora» que en la nube."},
+
+ {id:"url", cat:"pub", crit:"alta", name:"URL secreta del visor (ge-d3792841)",
+  what:"La dirección en línea del visor, con «candado» por la ruta secreta: reymon63.github.io/Dashboard/ge-d3792841/",
+  src:"engine/run.py — PUBREL = «ge-d3792841/index.html» + carpeta ge-d3792841/",
+  locs:[
+   {p:"engine/run.py", n:"PUBREL define dónde se publica la página", a:A_SRC},
+   {p:"visor_bot/ge-d3792841/index.html", n:"La página publicada (la que ve la gente)", a:A_AUTO},
+   {p:"visor_bot/index.html (raíz)", n:"La vieja dirección, hoy «Acceso restringido»", a:A_MAN},
+  ],
+  impact:"Si cambias la palabra secreta, edita PUBREL en run.py y renombra la carpeta ge-d3792841. El enlace viejo deja de servir, así que hay que avisar a quien lo tenga."},
+
+ {id:"token", cat:"pub", crit:"alta", name:"Token de GitHub (llave de publicación)",
+  what:"La llave que permite publicar (git push). Es secreta.",
+  src:"visor_bot/.gh_token (local) · respaldo en Drive «visor_gh_token.txt» (id 1XIvw…)",
+  locs:[
+   {p:"visor_bot/.gh_token", n:"El archivo que lee run_local.sh", a:A_SRC},
+   {p:"Drive › Visor Ejecutivo › visor_gh_token.txt", n:"Respaldo (descargar y guardar como .gh_token)", a:A_MAN},
+   {p:"variable VISOR_GH_TOKEN", n:"run_local.sh la exporta desde .gh_token", a:A_AUTO},
+  ],
+  impact:"Si el token expira o se regenera en GitHub, hay que reemplazar el archivo .gh_token (y el respaldo en Drive). Sin token válido no se publica."},
+
+ {id:"runlocal", cat:"pub", crit:"media", name:"run_local.sh (el lanzador)",
+  what:"El script que copia tus insumos vivos y ejecuta el motor. Tiene escritas las rutas de tu Mac.",
+  src:"visor_bot/run_local.sh",
+  locs:[
+   {p:"run_local.sh", n:"Rutas fijas: Avance (Descargas), Parámetros y Segmentación (Drive), HIST_DIR (Drive), .gh_token", a:A_SRC},
+   {p:"engine/run.py", n:"Es lo que ejecuta al final (recibe los flags)", a:A_AUTO},
+  ],
+  impact:"Si mueves de lugar tus insumos o las carpetas de Drive, hay que actualizar esas rutas aquí. Necesita correr «En tu computadora» (usa rutas locales absolutas)."},
+
+ {id:"gate", cat:"ui", crit:"baja", name:"Pantalla de acceso (textos e inactividad)",
+  what:"El diseño y los textos del login: «ACCESO RESTRINGIDO», «Visor Ejecutivo», «Garantías Extendidas · Grupo Walmart», y el cierre automático por 20 min de inactividad.",
+  src:"engine/gate_fragment.html (diseño/textos) + gate_script.html (lógica)",
+  locs:[
+   {p:"engine/gate_fragment.html", n:"Textos y diseño de la tarjeta de acceso", a:A_MAN},
+   {p:"engine/gate_script.html", n:"Valida clave (SHA-256) e idle de 20 min", a:A_MAN},
+  ],
+  impact:"Cambios cosméticos del login. La lista de quién entra NO está aquí (eso es la hoja «Usuarios»)."},
+
+ {id:"formatos", cat:"ui", crit:"baja", name:"Nombres de formato (Walmart · Bodega Aurrerá · Sam's Club)",
+  what:"Las claves internas WM/BA/SC y sus nombres largos, más el nombre de hoja de Sam's que es «SMC» en los archivos.",
+  src:"Claves WM/BA/SC en todo el motor; nombres largos en las plantillas y en build_evaluacion.py (FNAME)",
+  locs:[
+   {p:"engine/*.py (SHEET = {BA,WM,SC:'SMC'})", n:"Ojo: la hoja de Sam's se llama «SMC» en los Excel", a:A_SRC},
+   {p:"engine/build_evaluacion.py (FNAME)", n:"Walmart / Bodega Aurrerá / Sam's Club", a:A_MAN},
+   {p:"dashboard_template.html + ejecutivo", n:"Nombres de formato en la interfaz", a:A_MAN},
+  ],
+  impact:"Rara vez cambian. Si algún día cambia el nombre de la hoja de Sam's en el Excel (hoy «SMC»), se rompe la lectura — hay que ajustar SHEET en el código."},
+
+ {id:"instructivo", cat:"doc", crit:"media", name:"Instructivo del Visor (documento de referencia)",
+  what:"El documento que explica el visor a los usuarios: qué es cada sección, las estrellas y el glosario. Es lo que compartes como referencia.",
+  src:"Drive › «Visor Ejecutivo» › Instructivo_Visor_GE.html (copia buena) + 2 copias en Descargas",
+  locs:[
+   {p:"Drive › Visor Ejecutivo › Instructivo_Visor_GE.html", n:"La copia oficial (la más reciente)", a:A_SRC},
+   {p:"Descargas › Instructivo_Visor_GE.html (x2)", n:"Copias antiguas", a:A_MAN},
+  ],
+  impact:"NO se regenera con el pipeline: es un documento aparte que se edita a mano. Cuando cambie algo conceptual del visor (nombres, criterios, método), hay que actualizarlo aquí también."},
+];
+
+const REG=[
+ {k:"Visor en línea (secreto)", t:"URL", tc:"var(--cat-pub)", v:"reymon63.github.io/Dashboard/ge-d3792841/"},
+ {k:"Dirección vieja (Acceso restringido)", t:"URL", tc:"var(--cat-pub)", v:"reymon63.github.io/Dashboard/"},
+ {k:"Repositorio", t:"GitHub", tc:"var(--cat-pub)", v:"github.com/ReyMon63/Dashboard · rama main"},
+ {k:"Carpeta Drive «Visor Ejecutivo»", t:"Drive folder", tc:"var(--cat-datos)", v:"id 1Ll8n81pc8-p_pMWV-Ire2TeCLs38Lsgo"},
+ {k:"Carpeta Drive «Avance Ventas Bot»", t:"Drive folder", tc:"var(--cat-datos)", v:"id 1HDnP43cnizYNpqQcdsVQXCvnUeMIBdFh"},
+ {k:"Parámetros Base.xlsx", t:"Insumo", tc:"var(--cat-param)", v:"Drive Visor Ejecutivo · id 1WwnkGo39Wz06iQ_pksfg0H53phriyFq6"},
+ {k:"Avance de Ventas.xlsx", t:"Insumo", tc:"var(--cat-param)", v:"Drive Avance Ventas Bot · id 1WWTdmMMRq_mPXl6-xd32ZF5P3-GVFrrY"},
+ {k:"Segmentación.xlsx", t:"Insumo", tc:"var(--cat-param)", v:"Drive Avance Ventas Bot · id 1ATT-lme6ZGn7IA0R1GQaYASBgDZUEu4h"},
+ {k:"Histórico WM (con estrellas)", t:"Salida", tc:"var(--cat-datos)", v:"Drive Visor Ejecutivo · id 1GXMDWPNcYjzqPyfnUiVAA3-4xGePocv6"},
+ {k:"Histórico BA (con estrellas)", t:"Salida", tc:"var(--cat-datos)", v:"Drive Visor Ejecutivo · id 13_kK_GRPKcufnjAQKUHvRH5lEWfa5vpM"},
+ {k:"Histórico SC (con estrellas)", t:"Salida", tc:"var(--cat-datos)", v:"Drive Visor Ejecutivo · id 1PV2kxUThRLorn8MlNJwRroXbKfusBBb1"},
+ {k:"Evaluación de Tiendas.xlsx", t:"Salida", tc:"var(--cat-datos)", v:"Drive · id 1BPuuY5J0sAxl7eatSbejcSK-NbpDb13A"},
+ {k:"Token GitHub (respaldo)", t:"Credencial", tc:"var(--alta)", v:"Drive Visor Ejecutivo › visor_gh_token.txt · id 1XIvwdIhZsfWeXeGOKmugLK4m0ORiyk24"},
+ {k:"Token GitHub (local)", t:"Credencial", tc:"var(--alta)", v:"visor_bot/.gh_token"},
+ {k:"Credenciales Drive (subir Evaluación)", t:"Credencial", tc:"var(--alta)", v:"Desktop/Proyectos/avance_ventas_bot/token.json + credentials.json"},
+ {k:"Proyecto local", t:"Carpeta", tc:"var(--cat-pend)", v:"/Users/reymon/Desktop/Proyectos/visor_bot"},
+];
+
+/* ---------- render ---------- */
+const $=s=>document.querySelector(s);
+let active="all", query="";
+
+function tiles(){
+ const total=DATA.length;
+ const manual=DATA.filter(d=>d.locs.some(l=>l.a===false)).length;
+ const insumos=REG.filter(r=>r.t==="Insumo"||r.t==="Salida").length;
+ const enlaces=REG.length;
+ const T=[[total,"elementos mapeados"],[manual,"con ecos «a mano» que cuidar"],[insumos,"insumos y salidas"],[enlaces,"enlaces y llaves"]];
+ $("#tiles").innerHTML=T.map((t,i)=>`<div class="tile ${i===1?'warn':''}"><div class="n">${t[0]}</div><div class="l">${t[1]}</div></div>`).join("");
+}
+
+function chips(){
+ let h=`<button class="chip all on" data-cat="all"><span class="dot"></span>Todo</button>`;
+ for(const [k,v] of Object.entries(CATS)){
+   h+=`<button class="chip" data-cat="${k}"><span class="dot" style="background:${v.c}"></span>${v.label}</button>`;
+ }
+ $("#chips").innerHTML=h;
+ $("#chips").addEventListener("click",e=>{
+   const b=e.target.closest(".chip"); if(!b)return;
+   active=b.dataset.cat;
+   document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c===b));
+   render();
+ });
+}
+
+function badge(a){
+ if(a==="source")return `<span class="badge b-source">fuente de verdad</span>`;
+ if(a===true)return `<span class="badge b-auto">se actualiza solo</span>`;
+ return `<span class="badge b-manual">a mano</span>`;
+}
+
+function cardHTML(d){
+ const cc=CATS[d.cat].c;
+ const locs=d.locs.map(l=>`<div class="loc"><div class="lwhere"><div class="lpath">${l.p}</div><div class="lnote">${l.n}</div></div>${badge(l.a)}</div>`).join("");
+ return `<div class="card" data-cat="${d.cat}" data-id="${d.id}" style="--cc:${cc}">
+   <div class="card-head" role="button" tabindex="0" aria-expanded="false">
+     <span class="strip" style="--crit:var(--${d.crit==='alta'?'alta':d.crit==='media'?'media':'baja'})"></span>
+     <div class="body">
+       <div class="card-title-row">
+         <span class="catchip" style="--cc:${cc}">${CATS[d.cat].label}</span>
+         <span class="crit-tag crit-${d.crit}">${d.crit}</span>
+       </div>
+       <h4>${d.name}</h4>
+       <p class="what">${d.what}</p>
+       <p class="srcline"><b>Se define en:</b> <span>${d.src}</span></p>
+     </div>
+     <span class="exp">▶</span>
+   </div>
+   <div class="detail">
+     <div class="dh">Ubicaciones · ${d.locs.length}</div>
+     <div class="locs">${locs}</div>
+     <div class="impact"><div class="ih">◎ Radio de impacto</div><p>${d.impact}</p></div>
+   </div>
+ </div>`;
+}
+
+function render(){
+ const q=query.trim().toLowerCase();
+ const cards=DATA.filter(d=>{
+   if(active!=="all"&&d.cat!==active)return false;
+   if(!q)return true;
+   const hay=(d.name+" "+d.what+" "+d.src+" "+d.impact+" "+d.locs.map(l=>l.p+" "+l.n).join(" ")+" "+CATS[d.cat].label).toLowerCase();
+   return hay.includes(q);
+ });
+ $("#cards").innerHTML=cards.map(cardHTML).join("")||`<div style="padding:26px;text-align:center;color:var(--muted)">Sin resultados para «${query}».</div>`;
+ $("#count").textContent=`${cards.length} de ${DATA.length} elementos`;
+ bindCards();
+}
+
+function bindCards(){
+ document.querySelectorAll(".card-head").forEach(h=>{
+   const toggle=()=>{const c=h.closest(".card");c.classList.toggle("open");h.setAttribute("aria-expanded",c.classList.contains("open"));};
+   h.addEventListener("click",toggle);
+   h.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle();}});
+ });
+}
+
+function registry(){
+ $("#reg tbody").innerHTML=REG.map(r=>`<tr><td class="k">${r.k}</td><td><span class="pill" style="--cc:${r.tc}">${r.t}</span></td><td><span class="mono">${r.v}</span></td></tr>`).join("");
+}
+
+/* theme toggle */
+(function(){
+ const root=document.documentElement, btn=$("#themeBtn");
+ let saved=null; try{saved=localStorage.getItem("mtz-theme");}catch(e){}
+ if(saved)root.setAttribute("data-theme",saved);
+ btn.addEventListener("click",()=>{
+   const cur=root.getAttribute("data-theme");
+   const isDark=cur?cur==="dark":matchMedia("(prefers-color-scheme:dark)").matches;
+   const next=isDark?"light":"dark";
+   root.setAttribute("data-theme",next);
+   try{localStorage.setItem("mtz-theme",next);}catch(e){}
+ });
+})();
+
+$("#q").addEventListener("input",e=>{query=e.target.value;render();});
+tiles(); chips(); registry(); render();
+</script>
