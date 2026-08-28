@@ -334,7 +334,7 @@ datalist{color:#000}
   <header class="top">
     <div>
       <h1>Visor Ejecutivo · Garantías Extendidas</h1>
-      <div class="sub">Grupo Walmart · Walmart · Bodega Aurrerá · Sam's Club <span class="tag" id="tagRange"></span><span class="tag" id="tagStores"></span></div>
+      <div class="sub">Walmart · Bodega Aurrerá · Sam's Club <span class="tag" id="tagRange"></span><span class="tag" id="tagStores"></span></div>
     </div>
     <div style="display:flex;gap:8px;align-items:center">
       <button class="iconbtn" id="themeBtn">◐ Tema</button>
@@ -375,11 +375,8 @@ datalist{color:#000}
       <h3>Clasificación por estrellas</h3>
       <p>Cada tienda gana de 0 a 5 estrellas según cinco criterios (vende, crece, cumple, constancia y eficiencia). Es una medida de <strong>madurez</strong> de la tienda, no una calificación del personal.</p>
 
-      <h3>Presupuesto «Histórico Suavizado»</h3>
-      <p>La meta parte de la <strong>venta real del año previo</strong> de cada tienda y le suma un avance hacia su <strong>potencial</strong> (sus clientes elegibles × la conversión objetivo del formato). El crecimiento del formato se reparte según la <strong>brecha</strong> de cada tienda: quien tiene más clientes sin convertir crece más, y quien ya está en su techo mantiene. Se distribuye mes a mes con estacionalidad suavizada, sin bajar del piso mínimo, y se fija al inicio del año (no se mueve durante el año). Todos los parámetros viven en el archivo <em>Parámetros Base</em>.</p>
-
-      <h3>Mes en curso (datos proyectados)</h3>
-      <p>Cuando el mes todavía no cierra, el visor <strong>estima cómo terminará</strong> proyectando linealmente los días transcurridos, y lo avisa con una franja amarilla. Ojo en mayo y noviembre: la proyección lineal no capta bien los picos de HotSale y Buen Fin.</p>
+      <h3>Presupuesto sugerido</h3>
+      <p>Una <strong>meta anual y mensual por tienda</strong>, construida con <strong>nuevos algoritmos matemáticos</strong> para que sea <strong>justa y alcanzable</strong>: pide más a quien tiene más margen por crecer y mantiene a quien ya está en su techo, empujando a cada tienda de forma <strong>suavizada</strong>. Se fija al inicio del año y no se mueve, para dar <strong>certeza y rumbo</strong> todo el ejercicio. Aquí ves esa meta y qué tan cerca está cada formato de alcanzarla.</p>
 
       <h3>Descargas</h3>
       <p>En la sección de presupuesto puedes bajar a Excel el detalle por tienda de cada formato o de los tres juntos. Los botones de formatos que no tienen tiendas en el filtro activo aparecen <strong>atenuados</strong>, porque no bajarían nada.</p>
@@ -505,7 +502,7 @@ datalist{color:#000}
 
   <div class="panel" style="margin-bottom:16px">
     <div class="phrow">
-      <div><h2>Presupuesto sugerido · Histórico Suavizado</h2>
+      <div><h2>Presupuesto sugerido</h2>
       <div class="ph" id="sugSubtitle"></div></div>
     </div>
     <div class="opp" id="sugSummary" style="grid-template-columns:repeat(3,1fr);margin-top:4px"></div>
@@ -564,7 +561,6 @@ datalist{color:#000}
     </div>
   </div>
 
-  <div class="foot" id="foot"></div>
 </div>
 
 <script>
@@ -614,6 +610,10 @@ function segFilt(rows,keyFn){return rows.filter(r=>segPass(keyFn?keyFn(r):r.si))
 /* índice de recs por mes, para agregar respetando el filtro de segmento */
 const recsByMonth={};
 for(const _r of DB.recs){(recsByMonth[_r[1]]||(recsByMonth[_r[1]]=[])).push(_r);}
+// Padrón OFICIAL (único denominador de "total de tiendas"): tiendas con DATOS (registro) en la
+// ventana de 3 meses del ÚLTIMO MES CERRADO. Sin filtro de nombre. Respeta formato y segmento.
+const LC_MI=(function(){let b=NM-1;while(b>=0&&isProjected(b))b--;return b<0?0:b;})();
+function padronSet(f){const s=new Set();for(let m=Math.max(0,LC_MI-2);m<=LC_MI;m++){(recsByMonth[m]||[]).forEach(r=>{const st=DB.stores[r[0]];if(f&&f!=='ALL'&&st.f!==f)return;if(!segPass(r[0]))return;s.add(r[0]);});}return s;}
 function segActive(){return state.distrito!=='ALL'||state.territorial!=='ALL';}
 // formatos realmente presentes en la selección actual (formato + distrito/territorial)
 function formatsInScope(){
@@ -722,7 +722,7 @@ function rosterEligible(si){const nm=(DB.stores[si].n||'').trim().toLowerCase();
 function rosterActive(mi,f){
   const s=new Set();
   for(let m=Math.max(0,mi-2);m<=mi;m++){(recsByMonth[m]||[]).forEach(r=>{
-    const st=DB.stores[r[0]];if(f&&f!=='ALL'&&st.f!==f)return;if(!segPass(r[0]))return;if(!rosterEligible(r[0]))return;s.add(r[0]);});}
+    const st=DB.stores[r[0]];if(f&&f!=='ALL'&&st.f!==f)return;if(!segPass(r[0]))return;s.add(r[0]);});}
   return s;
 }
 function rosterMoves(mi,f){
@@ -738,7 +738,7 @@ function fmtBreak(list){const o={WM:0,BA:0,SC:0};list.forEach(si=>o[DB.stores[si
 function rosterNames(list){return list.slice(0,4).map(si=>{const s=DB.stores[si];return (s.n||('clave '+s.clave))+' ('+s.f+')';}).join(', ')+(list.length>4?' …':'');}
 function renderRoster(){
   const el=document.getElementById('execRoster');if(!el)return;
-  const mv=rosterMoves(state.mi,state.formato);
+  const mv=rosterMoves(Math.min(state.mi,LC_MI),state.formato);
   if(!mv){el.innerHTML='';return;}
   const nE=mv.entered.length,nL=mv.left.length,isAll=state.formato==='ALL';
   if(nE===0&&nL===0){el.innerHTML='<span style="color:var(--muted)">🏪 Padrón de tiendas'+(state.formato==='ALL'?'':' · '+FNAME[state.formato])+': sin altas ni bajas respecto al mes anterior.</span>';return;}
@@ -746,7 +746,7 @@ function renderRoster(){
   if(nE>0)parts.push(`<span class="up" style="font-weight:700">▲ ${nE} ${nE===1?'alta':'altas'}</span>`+(isAll?` <span style="color:var(--muted)">(${fmtBreak(mv.entered)})</span>`:'')+(nE<=4?` — ${rosterNames(mv.entered)}`:''));
   if(nL>0)parts.push(`<span class="down" style="font-weight:700">▼ ${nL} ${nL===1?'baja':'bajas'}</span>`+(isAll?` <span style="color:var(--muted)">(${fmtBreak(mv.left)})</span>`:'')+(nL<=4?` — ${rosterNames(mv.left)}`:''));
   const scope=state.formato==='ALL'?'':' · '+FNAME[state.formato];
-  el.innerHTML='🏪 <strong>Movimiento de padrón</strong>'+scope+' (al cierre de '+mlabel(state.mi)+'): '+parts.join(' &nbsp; · &nbsp; ');
+  el.innerHTML='🏪 <strong>Movimiento de padrón</strong>'+scope+' (al cierre de '+mlabel(Math.min(state.mi,LC_MI))+'): '+parts.join(' &nbsp; · &nbsp; ');
 }
 function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s;}
 function scopeInfo(){
@@ -790,7 +790,7 @@ function diagnoseKPIs(f,mi,base){
 }
 function recos(neg){return neg.slice().sort((a,b)=>RECPRIO.indexOf(a.key)-RECPRIO.indexOf(b.key)).slice(0,2).map(c=>c.rec);}
 function renderExec(){
-  const ep=effPeriod();const mi=ep.mi;const f=state.formato;const sc=scopeInfo();const base=ep.base;
+  const ep=effPeriod();const mi=Math.min(ep.mi,LC_MI);const f=state.formato;const sc=scopeInfo();const base=ep.base;
   const d=diagFor(f,mi);
   document.getElementById('execPh').textContent=sc.short+' · '+mlabel(mi);
   const chip=document.getElementById('execChip');
@@ -842,10 +842,18 @@ const KDEF=[
   {key:'alc',label:'Alcance plan',fmt:fAlc,pctMetric:true,sub:'GE ÷ presupuesto'},
   {key:'ticket',label:'Ticket prom.',fmt:fMoneyFull,pctMetric:false,sub:'Monto ÷ pieza'},
   {key:'tiendas',label:'Tiendas c/venta',fmt:fInt,pctMetric:false,sub:'con al menos 1 GE'},
-  {key:'cero',label:'Tiendas sin venta',fmt:fInt,pctMetric:false,sub:'0 GE en el mes',noYtd:true,invert:true},
+  {key:'cero',label:'Tiendas sin venta',fmt:fInt,pctMetric:false,sub:'sin GE (0 o sin registro)',noYtd:true,invert:true},
 ];
-function ceroCount(f,mi){return recsAt(mi,f).filter(r=>r[3]<=0).length;}
-function kpiValues(f,mi,base){const a=base==='YTD'?aggYTD(f,mi):aggAt(f,mi);const m=metricsFrom(a);m.tiendas=a[4];m.cero=ceroCount(f,mi);return m;}
+/* Padrón del filtro activo en el mes: total (Y), con venta y sin venta.
+   'sin venta' = tiendas del padrón que NO vendieron (traigan 0 o sin registro en el mes). */
+function tiendasCounts(mi,f){
+  const set=padronSet(f), emi=Math.min(mi,LC_MI), rs=recsByMonth[emi]||[], sell=new Set();
+  rs.forEach(r=>{const st=DB.stores[r[0]];if(f!=='ALL'&&st.f!==f)return;if(!segPass(r[0]))return;if(r[3]>0)sell.add(r[0]);});
+  let con=0;set.forEach(si=>{if(sell.has(si))con++;});
+  return {Y:set.size,con:con,sin:set.size-con};
+}
+function ceroCount(f,mi){return tiendasCounts(mi,f).sin;}
+function kpiValues(f,mi,base){const a=base==='YTD'?aggYTD(f,mi):aggAt(f,mi);const m=metricsFrom(a);const tc=tiendasCounts(mi,f);m.tiendas=tc.con;m.cero=tc.sin;m.padron=tc.Y;return m;}
 function renderKPIs(){
   const f=state.formato;const anual=state.base==='ANUAL';let mi=state.mi,base=state.base;
   if(anual){const em=lastClosedMonthOfYear(state.anualYear);if(em>=0)mi=em;base='YTD';}
@@ -878,7 +886,7 @@ function renderKPIs(){
     el.innerHTML=`${k.hero?'<div class="hero-mark"></div>':''}
       <div class="k-label">${k.label}</div>
       <div class="k-val">${k.fmt(val)}</div>
-      <div class="k-sub">${k.key==='cant'?k.sub+' · ≈ '+geDaily:k.sub+subExtra}</div>
+      <div class="k-sub">${k.key==='cant'?k.sub+' · ≈ '+geDaily:((k.key==='tiendas'||k.key==='cero')?k.sub+' · son el '+(cur.padron?Math.round(val/cur.padron*100):0)+'% de '+fInt(cur.padron||0)+' tiendas':k.sub+subExtra)}</div>
       <div class="deltas">
         <div class="delta"><span class="dl">${dLbl}</span>${dVal}</div>
       </div>`;
@@ -1033,7 +1041,7 @@ function renderOpp(){
   // pareto
   const arr=rows.map(r=>r[2]).filter(x=>x>0).sort((a,b)=>b-a);const total=arr.reduce((a,b)=>a+b,0);
   function share(p){const n=Math.max(1,Math.round(arr.length*p));let s=0;for(let i=0;i<n;i++)s+=arr[i];return total?s/total:0;}
-  document.getElementById('pareto').innerHTML=`El <strong>20%</strong> de tiendas top concentra <strong>${fPct(share(.2))}</strong> del monto · el <strong>50%</strong> concentra <strong>${fPct(share(.5))}</strong> · total de ${fInt(rows.length)} tiendas.`;
+  document.getElementById('pareto').innerHTML=`El <strong>20%</strong> de tiendas top concentra <strong>${fPct(share(.2))}</strong> del monto · el <strong>50%</strong> concentra <strong>${fPct(share(.5))}</strong> · total de ${fInt(padronSet(f).size)} tiendas.`;
 }
 /* ============ budget quality diagnostic ============ */
 function renderBudget(){
@@ -1115,7 +1123,7 @@ function allBud(f){return f==='ALL'?['WM','BA','SC'].flatMap(normBud):normBud(f)
 function renderSug(){
   const p=BUD3.params;const gPct=(p.growth*100).toFixed(0);
   const floorTxt=`Walmart ${p.floor.WM} · Bodega ${p.floor.BA} · Sam's ${p.floor.SC}`;
-  document.getElementById('sugSubtitle').innerHTML = `El presupuesto de cada tienda = <strong>venta del año previo + lo que aporta su Brecha + lo que aporta el piso</strong>, repartido por la <strong>estacionalidad del formato</strong>; <strong>mayo y noviembre</strong> se ponen con su <em>venta real del mes</em>, y el <strong>piso</strong> sube en esos meses siguiendo el evento (HotSale/Buen Fin). Se fija al inicio del año y no se mueve.`;
+  document.getElementById('sugSubtitle').innerHTML = `Un presupuesto <strong>distinto y más inteligente</strong>: construido con <strong>nuevos algoritmos matemáticos</strong> que fijan una meta <strong>justa y alcanzable</strong> para cada tienda y la <strong>empujan de forma suavizada</strong> hacia su mejor versión, sin saltos imposibles. Se fija al inicio del año y da <strong>certeza y rumbo</strong> todo el ejercicio.`;
   const box=document.getElementById('sugSummary');box.innerHTML='';
   formatsInScope().forEach(f=>{
     const rows=normBud(f);let cur=0,sug=0,fl=0;rows.forEach(r=>{cur+=r.cur;sug+=r.sug;if(r.sug<=p.floor[f]+0.5)fl++;});
@@ -1148,8 +1156,8 @@ function renderPayability(){
   let TP=0,TPc=0,TT=0;
   const scopeF=formatsInScope();
   scopeF.forEach(f=>{
-    const rows=normBud(f);let paid=0,paidCur=0,tot=0;
-    rows.forEach(r=>{if(r.pz<=0)return;tot++;const hitConv=r.conv>=ct[f];
+    const PADp=padronSet(f);const rows=normBud(f);let paid=0,paidCur=0;const tot=PADp.size;
+    rows.forEach(r=>{if(!PADp.has(r.si))return;const hitConv=r.conv>=ct[f];
       if((r.sug>0&&r.pz>=r.sug)||hitConv)paid++;
       if((r.cur>0&&r.pz>=r.cur)||hitConv)paidCur++;});
     TP+=paid;TPc+=paidCur;TT+=tot;const pctv=tot?paid/tot:0;const d=paid-paidCur;
@@ -1167,7 +1175,7 @@ function renderPayability(){
       <div style="font-size:12.5px;margin-top:3px"><strong>${fInt(TP)}</strong> tiendas <span style="color:var(--muted)">vs ${fInt(TPc)} anterior</span> <span class="${dG>=0?'up':'down'}" style="font-weight:700">${dG>=0?'+':''}${fInt(dG)}</span></div></div>`;
   }
   html+='</div>';
-  html+=`<div class="ph" style="margin-top:10px;line-height:1.55">Lectura: con la meta «Histórico Suavizado» cobrarían <strong>${fInt(TP)}</strong> de ${fInt(TT)} tiendas activas (<strong>${fPct(tot)}</strong>), <strong>${dG>=0?fInt(dG)+' más':fInt(-dG)+' menos'}</strong> que con el presupuesto actual. El % está calculado sobre la venta real de 12 meses vs. la meta (que reparte el +${(BUD3.params.growth*100).toFixed(0)}% del formato por brecha); la exigencia se ajusta en <em>Parámetros Base</em>.</div>`;
+  html+=`<div class="ph" style="margin-top:10px;line-height:1.55">Lectura: con la meta sugerida cobrarían <strong>${fInt(TP)}</strong> de ${fInt(TT)} tiendas activas (<strong>${fPct(tot)}</strong>), <strong>${dG>=0?fInt(dG)+' más':fInt(-dG)+' menos'}</strong> que con el presupuesto actual. El % se calcula sobre la venta real de 12 meses frente a la meta.</div>`;
   html+='</div>';
   document.getElementById('sugPay').innerHTML=html;
 }
@@ -1191,13 +1199,13 @@ function buildExcel(scope){
   const BY=+DB.meta.months[DB.meta.months.length-1].slice(0,4),PREV=BY-1;
   const L_VENTA='Venta '+PREV+' (GE)',L_PRESU='Presupuesto '+BY+' (GE)';
   const wb=XLSX.utils.book_new();
-  const H1=['Tienda','Clave','Formato',L_VENTA,L_PRESU,'Crecimiento %'];
+  const H1=['Tienda','Clave','Formato','Elegibles '+PREV,L_VENTA,'Conversión '+PREV,L_PRESU,'Crecimiento %'];
   const s1=[H1];
-  formats.forEach(f=>normBud(f).forEach(r=>{const s=storeByIdx[r.si];const v=Math.round(r.v2025||0);const crec=(r.v2025?r.sug/r.v2025-1:0);
-    s1.push([s.n||'',s.clave,FNAME[f],v,Math.round(r.sug),crec]);}));
+  formats.forEach(f=>normBud(f).forEach(r=>{const s=storeByIdx[r.si];const v=Math.round(r.v2025||0);const crec=(r.v2025?r.sug/r.v2025-1:0);const conv=(r.el?(r.v2025||0)/r.el:0);
+    s1.push([s.n||'',s.clave,FNAME[f],Math.round(r.el||0),v,conv,Math.round(r.sug),crec]);}));
   const ws1=XLSX.utils.aoa_to_sheet(s1);
-  ws1['!cols']=[{wch:30},{wch:8},{wch:16},{wch:16},{wch:18},{wch:14}];
-  fmtCol(ws1,s1.length,[5],'0.0%');fmtCol(ws1,s1.length,[3,4],'#,##0');
+  ws1['!cols']=[{wch:30},{wch:8},{wch:16},{wch:14},{wch:16},{wch:13},{wch:18},{wch:14}];
+  fmtCol(ws1,s1.length,[5,7],'0.0%');fmtCol(ws1,s1.length,[3,4,6],'#,##0');
   XLSX.utils.book_append_sheet(wb,ws1,'Resumen por tienda');
   const H2=['Tienda','Clave','Formato',...MES12,L_PRESU];
   const s2=[H2];
@@ -1206,35 +1214,6 @@ function buildExcel(scope){
   const ws2=XLSX.utils.aoa_to_sheet(s2);ws2['!cols']=[{wch:30},{wch:8},{wch:16},...MES12.map(_=>({wch:6})),{wch:18}];
   fmtCol(ws2,s2.length,[...Array(13).keys()].map(i=>i+3),'#,##0');
   XLSX.utils.book_append_sheet(wb,ws2,'Meta mensual');
-  const starF=(st)=>st<=1?0:(st===2?0.8:1);
-  const H3=['Tienda','Clave','Formato','Elegibles '+PREV,L_VENTA,'Conversión '+PREV,'Conversión objetivo','Potencial '+PREV+' (GE)','Brecha '+PREV+' (GE)','%FB','Factor estrella','Δ x Brecha (GE)','Δ x Piso (GE)',L_PRESU,'Presupuesto anterior (GE)'];
-  const s3=[H3];
-  formats.forEach(f=>normBud(f).forEach(r=>{const s=storeByIdx[r.si];const ct=p.conv_target[f];const fb=(p.fb&&p.fb[f])||0;const v=r.v2025||0;const conv=(r.el?v/r.el:0);const pot=r.el*ct;const brecha=Math.max(pot-v,0);const fac=(s.f==='SC'?1:starF(r.tier));const dbr=brecha*fb*fac;const dpiso=r.sug-v-dbr;
-    s3.push([s.n||'',s.clave,FNAME[f],Math.round(r.el),Math.round(v),conv,ct,Math.round(pot),Math.round(brecha),fb,fac,Math.round(dbr),Math.round(dpiso),Math.round(r.sug),Math.round(r.cur)]);}));
-  const ws3=XLSX.utils.aoa_to_sheet(s3);
-  ws3['!cols']=[{wch:30},{wch:8},{wch:14},{wch:12},{wch:14},{wch:13},{wch:15},{wch:16},{wch:14},{wch:8},{wch:13},{wch:15},{wch:13},{wch:18},{wch:20}];
-  fmtCol(ws3,s3.length,[5,6,9],'0.0%');fmtCol(ws3,s3.length,[10],'0%');fmtCol(ws3,s3.length,[3,4,7,8,11,12,13,14],'#,##0');
-  XLSX.utils.book_append_sheet(wb,ws3,'Auditoría');
-  const gPct=(p.growth*100).toFixed(0);
-  const wmM=Math.floor(p.floor.WM/12),baM=Math.floor(p.floor.BA/12),scM=Math.floor(p.floor.SC/12);
-  const fbTxt='WM '+(p.fb.WM*100).toFixed(1)+'% · BA '+(p.fb.BA*100).toFixed(1)+'% · SC '+(p.fb.SC*100).toFixed(1)+'%';
-  const m=[['Metodología de presupuesto '+BY+' · cómo se arma cada dato'],
-      ['Las letras (D, E, F…) son las columnas de la hoja «Auditoría». El presupuesto se fija al inicio del año (base = año previo) y no se mueve.'],[],
-      ['Objetivo','Fijar la meta de cada tienda con su propio dato: su venta del año previo + cerrar parte de su brecha. Alcanzable y justificada por su tráfico.'],
-      ['1 · Conversión (F)','= Venta previa (E) ÷ Elegibles (D). Qué proporción de sus clientes elegibles terminó comprando GE.'],
-      ['2 · Potencial (H)','= Elegibles (D) × Conversión objetivo (G). Las GE que vendería a la conversión meta del formato (WM 20% · BA 7% · SC 15%).'],
-      ['3 · Brecha (I)','= MÁX( Potencial (H) − Venta previa (E) ; 0 ). Las GE que deja sin convertir. Si ya vende más que su potencial, es 0 (mantiene).'],
-      ['4 · Δ x Brecha (L)','= Brecha (I) × %FB (J) × Factor estrella (K). Las GE extra que se le piden por cerrar brecha.'],[],
-      ['%FB (J)','Un % por formato, calibrado para llegar al '+gPct+'% objetivo. '+BY+': WM '+(p.fb.WM*100).toFixed(1)+'% · SC '+(p.fb.SC*100).toFixed(1)+'%. En Bodega el piso ya supera el 10%, así que su %FB es 0 y su crecimiento lo marca el piso.'],
-      ['Factor estrella (K)','★3-5 = 100% · ★2 = 80% · ★0-1 = 0% (no crecen por brecha; se quedan en su piso). SC no aplica factor: reparte la brecha entre todas sus tiendas (columna = 1).'],
-      ['Δ x Piso (M)','= Presupuesto (N) − Venta previa (E) − Δ x Brecha (L). Las GE que agrega el piso mínimo cuando la tienda es chica.'],
-      ['Presupuesto '+BY+' (N)','= Venta previa (E) + Δ x Brecha (L) + Δ x Piso (M). Sale del motor: venta + brecha, repartido por estacionalidad, con el piso mensual aplicado.'],
-      ['Presupuesto anterior (O)','Solo referencia: la meta que la tienda tenía antes. No entra en el cálculo.'],[],
-      ['Reparto mensual','Estacionalidad DEL FORMATO suavizada ('+(p.alpha*100).toFixed(0)+'% formato + '+(100-p.alpha*100).toFixed(0)+'% plano) en los 10 meses normales; mayo y noviembre se ponen con su venta real del mes (tal cual).'],
-      ['Piso mínimo mensual','Ninguna meta mensual baja de: WM '+wmM+' · BA '+baM+' · SC '+scM+' GE al mes. En mayo y noviembre el piso sube siguiendo la estacionalidad de evento del formato (HotSale/Buen Fin).'],
-      [],['Generado',DB.meta.generated+' · Fuente: Histórico WM/BA/SC (carpeta Avance de ventas)']];
-  const ws4=XLSX.utils.aoa_to_sheet(m);ws4['!cols']=[{wch:24},{wch:104}];
-  XLSX.utils.book_append_sheet(wb,ws4,'Metodología');
   const fn=(scope==='ALL'?'Presupuesto_GE_GrupoWalmart_':'Presupuesto_GE_'+scope+'_')+BY+'.xlsx';
   XLSX.writeFile(wb,fn);
   document.getElementById('sugStatus').textContent='✓ '+fn+' descargado';
@@ -1281,7 +1260,7 @@ function renderStars(){
   // LLEGADAS a cada nivel: arrUp = llegaron de abajo (subieron); arrDown = llegaron de arriba (cayeron)
   const arrUp=Array(6).fill(0), arrDown=Array(6).fill(0);
   clsMovers=[];
-  Object.keys(STARS.levels).forEach(si=>{const s=storeByIdx[+si];if(!showF.includes(s.f))return;if(!segPass(+si))return;
+  const PADS=padronSet(state.formato);Object.keys(STARS.levels).forEach(si=>{const s=storeByIdx[+si];if(!showF.includes(s.f))return;if(!segPass(+si))return;if(!PADS.has(+si))return;
     const now=starAt(+si,mi);if(now>=0)counts[now]++;
     if(hasPrev){const was=starAt(+si,mi-1);
       if(now>=0&&was>=0&&now!==was){
@@ -1348,7 +1327,7 @@ function renderStore(s){
   else{chk.innerHTML='<div style="font-size:12px;line-height:1.9;margin-top:2px">'+CRITSHORT.map((c,i)=>{
     const pend=prov&&i===1;const ok=(mask>>i)&1;
     const ic=pend?'<span style="color:var(--muted)">◔</span>':ok?'<span style="color:var(--good-ink)">✓</span>':'<span style="color:var(--bad)">✗</span>';
-    return `<span title="${PROXNAME[i]}: ${CRIT[i]}" style="display:inline-flex;align-items:center;gap:6px;margin-right:16px">${ic} ${c}${pend?' <span style="color:var(--muted)">(pendiente)</span>':''}</span>`;}).join('')+'</div>';}
+    return `<span title="${PROXNAME[i]}" style="display:inline-flex;align-items:center;gap:6px;margin-right:16px">${ic} ${c}${pend?' <span style="color:var(--muted)">(pendiente)</span>':''}</span>`;}).join('')+'</div>';}
   const px=document.getElementById('storeProx');const pr=(stv<0)?null:proximaJS(s.i,smi);
   if(!pr){px.innerHTML='';}
   else if(pr.max){px.innerHTML='<div style="font-size:12.5px;background:rgba(12,163,12,.10);border:1px solid var(--border);border-radius:8px;padding:8px 11px;display:inline-block">⭐ <strong>Nivel máximo (5★)</strong> — mantener los 5 logros</div>';}
@@ -1412,6 +1391,12 @@ seg('segRankMetric',v=>{state.rankMetric=v;renderRank();});
   Object.keys(SEG).forEach(si=>{const g=SEG[si],ff=DB.stores[+si]&&DB.stores[+si].f;if(!ff)return;if(g.t)terrFmt[g.t]=ff;if(g.d)distFmt[g.d]=ff;});
   // Implants (clave I…) supervisan UN solo formato → sí fijan el FORMATO.
   // Territoriales (clave T…) cubren los 3 formatos → NO se mueve el FORMATO al elegirlos.
+  // distrito -> {territorial: #tiendas}. Un distrito puede tener 2 responsables (Territorial físico + Implant remota).
+  const distTerrCnt={};
+  Object.keys(SEG).forEach(si=>{const g=SEG[si];if(g.d&&g.t){(distTerrCnt[g.d]||(distTerrCnt[g.d]={}))[g.t]=(distTerrCnt[g.d][g.t]||0)+1;}});
+  function terrsEnDist(d){return distTerrCnt[d]?Object.keys(distTerrCnt[d]):[];}
+  function terrDominante(d){const m=distTerrCnt[d];if(!m)return 'ALL';let best='ALL',bc=-1;for(const t in m){if(m[t]>bc){bc=m[t];best=t;}}return best;}
+  function setTerrOptions(present){Array.from(st.options).forEach(o=>{o.disabled=present?!(o.value==='ALL'||present.indexOf(o.value)>=0):false;});}
   const IMPLANTS=DB.implants||{};   // { nombreImplant: formato }
   function setFormato(f){state.formato=f;document.querySelectorAll('#segFormato button').forEach(b=>b.classList.toggle('active',b.dataset.v===f));}
   function syncFmt(){let f='ALL',touch=true;
@@ -1419,8 +1404,24 @@ seg('segRankMetric',v=>{state.rankMetric=v;renderRank();});
     else if(state.distrito&&state.distrito!=='ALL'){ f=distFmt[state.distrito]||'ALL'; }                                              // distrito: un solo formato
     if(touch)setFormato(f);
   }
-  sd.onchange=()=>{state.distrito=sd.value;syncFmt();refreshAll();};
-  st.onchange=()=>{state.territorial=st.value;syncFmt();refreshAll();};
+  sd.onchange=()=>{
+    state.distrito=sd.value;
+    if(state.distrito!=='ALL'){
+      state.territorial=terrDominante(state.distrito); st.value=state.territorial;   // por default: quien tenga MÁS tiendas en el distrito
+      setTerrOptions(terrsEnDist(state.distrito));                                    // habilita 'Todos' + territoriales con tiendas en ese distrito; deshabilita el resto
+      setFormato(distFmt[state.distrito]||'ALL');                                     // el distrito manda el formato
+    } else {
+      state.territorial='ALL'; st.value='ALL'; setTerrOptions(null);                  // sin distrito: re-habilita todos los territoriales
+      syncFmt();
+    }
+    refreshAll();
+  };
+  st.onchange=()=>{
+    state.territorial=st.value;
+    if(state.distrito&&state.distrito!=='ALL'){ setFormato(distFmt[state.distrito]||'ALL'); } // con distrito activo, el formato lo manda el distrito
+    else { syncFmt(); }
+    refreshAll();
+  };
 })();
 document.getElementById('themeBtn').onclick=()=>{const r=document.documentElement;r.dataset.theme=r.dataset.theme==='dark'?'light':'dark';refreshAll();if(document.getElementById('storeResult').classList.contains('on'))document.getElementById('storeGo').click();};
 {const lo=document.getElementById('logoutBtn');if(lo)lo.onclick=()=>location.reload();}
@@ -1445,8 +1446,15 @@ document.getElementById('dlMovers').onclick=buildMoversExcel;
 
 /* tags + footer */
 document.getElementById('tagRange').textContent=mlabel(0)+' – '+mlabel(NM-1);
-document.getElementById('tagStores').textContent=fInt(DB.stores.length)+' tiendas/clubes';
-document.getElementById('foot').innerHTML=`Fuente: archivos <em>Histórico WM · Histórico BA · Histórico SC</em> (carpeta «Avance de ventas»). ${NM} meses de historia (${mlabel(0)}–${mlabel(NM-1)}). Columnas homologadas: Monto GE ($), Piezas GE, Presupuesto, Alcance de plan, Elegibles y Conversión. «Base YTD» acumula de enero del año seleccionado al mes de cierre. Crecimientos: <strong>YoY</strong> = mismo mes del año anterior; <strong>YTD vs YTD</strong> = acumulado del año vs. mismo periodo del año previo. Estructura preparada para incorporar catálogos de <strong>zona</strong> y <strong>vendedor</strong> a nivel tienda. Generado ${DB.meta.generated}.`;
+/* Total de tiendas del TÍTULO = padrón vigente al ÚLTIMO MES CERRADO (no el catálogo bruto).
+   Solo cambia en los cierres de mes y cuadra con las altas/bajas del padrón. Global (sin filtro). */
+(function(){
+  var lc=NM-1; while(lc>=0&&isProjected(lc)) lc--;
+  var s=new Set();
+  for(var m=Math.max(0,lc-2);m<=lc;m++){(recsByMonth[m]||[]).forEach(function(r){ s.add(r[0]); });}
+  document.getElementById('tagStores').textContent=fInt(s.size)+' tiendas/clubes';
+})();
+
 
 initMonths();buildStoreList();refreshAll();
 </script>

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Metodología de Cálculo del Visor GE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#eef1f6; --surface:#ffffff; --surface-2:#f5f8fc; --surface-3:#eef3f9;
+  --ink:#14263f; --ink-soft:#33455f; --muted:#5b6b82; --faint:#8b99ac;
+  --border:#dbe2ec; --border-strong:#c6d1df;
+  --accent:#2a6fdb; --accent-ink:#1f4e79; --accent-wash:#e8f1fd;
+  --auto:#1c7a38; --auto-wash:#e5f4e9;
+  --manual:#a9701a; --manual-wash:#fbf1de;
+  --alta:#c0392b; --alta-wash:#fbe9e7;
+  --pos:#1c7a38; --neg:#c0392b;
+  --shadow:0 1px 2px rgba(16,32,58,.06),0 8px 24px -14px rgba(16,32,58,.28);
+  --radius:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0a121e; --surface:#101c2e; --surface-2:#0d1826; --surface-3:#132339;
+    --ink:#e9f0fb; --ink-soft:#c3d1e5; --muted:#94a6bf; --faint:#6d7f97;
+    --border:#22324a; --border-strong:#2c3f5c;
+    --accent:#5aa2ff; --accent-ink:#a8caff; --accent-wash:#14243c;
+    --auto:#4fc27a; --auto-wash:#12271b; --manual:#e6ad4e; --manual-wash:#2c2314;
+    --alta:#f2776b; --alta-wash:#2e1613; --pos:#4fc27a; --neg:#f2776b;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -16px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0a121e; --surface:#101c2e; --surface-2:#0d1826; --surface-3:#132339;
+  --ink:#e9f0fb; --ink-soft:#c3d1e5; --muted:#94a6bf; --faint:#6d7f97;
+  --border:#22324a; --border-strong:#2c3f5c;
+  --accent:#5aa2ff; --accent-ink:#a8caff; --accent-wash:#14243c;
+  --auto:#4fc27a; --auto-wash:#12271b; --manual:#e6ad4e; --manual-wash:#2c2314;
+  --alta:#f2776b; --alta-wash:#2e1613; --pos:#4fc27a; --neg:#f2776b;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -16px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; font-size:15.5px; line-height:1.6}
+.wrap{max-width:1000px; margin:0 auto; padding:0 20px 80px}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+/* topbar */
+.topbar{position:sticky; top:0; z-index:40; background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:blur(10px); border-bottom:1px solid var(--border)}
+.topbar-in{max-width:1000px; margin:0 auto; padding:12px 20px; display:flex; align-items:center; gap:14px; flex-wrap:wrap}
+.brand{display:flex; align-items:center; gap:11px; min-width:0}
+.brand .glyph{flex:none; width:34px; height:34px; border-radius:9px; display:grid; place-items:center;
+  background:linear-gradient(155deg,var(--accent),var(--accent-ink)); color:#fff; font-size:17px}
+.brand h1{margin:0; font-size:16px; font-weight:700; white-space:nowrap}
+.brand .sub{font-size:11.5px; color:var(--muted); font-weight:500}
+.spacer{flex:1}
+.nav{display:flex; gap:8px; flex-wrap:wrap}
+.nav a{font-size:12.5px; text-decoration:none; color:var(--ink-soft); border:1px solid var(--border-strong);
+  background:var(--surface); padding:7px 11px; border-radius:9px}
+.nav a:hover{border-color:var(--accent); color:var(--accent)}
+.nav a.here{border-color:var(--accent); color:var(--accent); background:var(--accent-wash)}
+.tgl{flex:none; border:1px solid var(--border-strong); background:var(--surface); color:var(--ink-soft);
+  width:38px; height:34px; border-radius:9px; cursor:pointer; font-size:15px}
+.tgl:hover{border-color:var(--accent); color:var(--accent)}
+/* hero */
+.hero{padding:40px 0 20px}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--manual); font-weight:600; margin-bottom:12px}
+.hero h2{margin:0 0 12px; font-size:clamp(26px,5vw,38px); line-height:1.1; font-weight:700; letter-spacing:-.02em}
+.hero p{margin:0; max-width:62ch; color:var(--ink-soft); font-size:16px}
+.stamp{margin-top:16px; font-size:12.5px; color:var(--faint); font-family:"IBM Plex Mono",monospace}
+/* master links strip */
+.masters{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:22px 0 6px}
+@media(max-width:680px){.masters{grid-template-columns:1fr}}
+.mcard{display:block; text-decoration:none; color:inherit; background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; padding:14px 15px; box-shadow:var(--shadow)}
+.mcard:hover{border-color:var(--accent)}
+.mcard .mt{font-size:10.5px; font-family:"IBM Plex Mono",monospace; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); font-weight:600}
+.mcard .mn{font-weight:700; margin-top:4px}
+.mcard .md{font-size:12.5px; color:var(--muted); margin-top:3px}
+.mcard.self{border-color:var(--accent); background:var(--accent-wash)}
+/* sections */
+.sec{margin-top:46px; scroll-margin-top:70px}
+.sec-h{display:flex; align-items:baseline; gap:12px; margin-bottom:4px; flex-wrap:wrap}
+.sec-h h3{margin:0; font-size:22px; font-weight:700; letter-spacing:-.01em}
+.sec-h .k{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--faint)}
+.sec p{color:var(--ink-soft)}
+.card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; box-shadow:var(--shadow); margin-top:14px}
+h4{margin:18px 0 8px; font-size:15px}
+table{width:100%; border-collapse:collapse; margin:8px 0 4px; font-size:14.5px}
+th,td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--border)}
+th{font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:600}
+td.p{text-align:center; font-weight:700; font-variant-numeric:tabular-nums; width:90px}
+.pos{color:var(--pos)} .neg{color:var(--neg)}
+.tablecap{font-size:13px; color:var(--muted); margin:2px 0 0}
+/* vinculo box */
+.vinc{margin-top:16px; border:1px dashed var(--border-strong); border-radius:11px; background:var(--surface-2); padding:12px 14px}
+.vinc .vh{font-size:11px; font-family:"IBM Plex Mono",monospace; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); font-weight:600; margin-bottom:6px}
+.vinc ul{margin:0; padding-left:18px}
+.vinc li{margin:3px 0; font-size:13.5px}
+.badge{display:inline-block; font-size:11px; font-weight:600; padding:2px 8px; border-radius:999px; font-family:"IBM Plex Mono",monospace}
+.b-auto{background:var(--auto-wash); color:var(--auto)}
+.b-manual{background:var(--manual-wash); color:var(--manual)}
+.note{background:var(--accent-wash); border:1px solid color-mix(in srgb,var(--accent) 30%,var(--border)); border-radius:10px; padding:10px 13px; font-size:13.5px; color:var(--ink-soft); margin-top:10px}
+.foot{margin-top:54px; padding-top:16px; border-top:1px solid var(--border); font-size:12.5px; color:var(--faint)}
+code{font-family:"IBM Plex Mono",monospace; font-size:.92em; background:var(--surface-3); padding:1px 5px; border-radius:5px}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="topbar-in">
+  <div class="brand">
+    <div class="glyph">∑</div>
+    <div><h1>Metodología · Visor GE</h1><div class="sub">Bases de cálculo y rangos (know-how interno)</div></div>
+  </div>
+  <div class="spacer"></div>
+  <nav class="nav">
+    <a href="Conocimiento_Base_Proyecto_Visor_GE.md">Conocimiento Base</a>
+    <a href="Matriz_Maestra_Visor_GE.html">Matriz Maestra</a>
+    <a href="#" class="here">Metodología</a>
+  </nav>
+  <button class="tgl" id="tgl" title="Cambiar tema">◐</button>
+</div></div>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="eyebrow">Documento interno · NO se comparte con el Cliente</div>
+    <h2>Cómo se calcula cada cosa</h2>
+    <p>Aquí viven las <strong>bases de cálculo y los rangos</strong> de todo lo que el visor decide solo: la etiqueta del diagnóstico, el total de tiendas (padrón), y más. Si cambias un rango aquí, revisa los <strong>vínculos</strong> de cada bloque para ajustar el código y avisar a la Matriz.</p>
+    <div class="stamp">Última actualización: 28 de agosto de 2026</div>
+  </div>
+
+  <!-- LOS TRES REGISTROS MAESTROS -->
+  <div class="masters">
+    <a class="mcard" href="Conocimiento_Base_Proyecto_Visor_GE.md">
+      <div class="mt">El «qué»</div><div class="mn">Conocimiento Base</div>
+      <div class="md">Qué es el proyecto y las reglas de oro.</div></a>
+    <a class="mcard" href="Matriz_Maestra_Visor_GE.html">
+      <div class="mt">El «dónde»</div><div class="mn">Matriz Maestra</div>
+      <div class="md">Dónde vive cada cosa y qué le pega (mapa de dependencias).</div></a>
+    <a class="mcard self" href="#">
+      <div class="mt">El «cómo»</div><div class="mn">Metodología</div>
+      <div class="md">Bases de cálculo y rangos. Estás aquí.</div></a>
+  </div>
+  <div class="note"><strong>Cómo están vinculados los tres:</strong> cada concepto tiene una <span class="mono">clave</span> igual en este documento y en la Matriz (ej. <span class="mono">diagnostico</span>, <span class="mono">padron</span>). La <strong>Matriz es el centro</strong>: su tarjeta enumera TODOS los lugares a tocar (código y documentos). Aquí abajo, cada bloque trae su caja <em>«Vínculos»</em> con la clave y los archivos/funciones exactos. Regla: si cambias un rango, (1) edítalo aquí, (2) cámbialo en el código listado, (3) revisa la clave en la Matriz por si pega en otro lado.</div>
+
+  <!-- 1. DIAGNÓSTICO -->
+  <section class="sec" id="diagnostico">
+    <div class="sec-h"><h3>1 · Diagnóstico ejecutivo</h3><span class="k">clave: diagnostico</span></div>
+    <p>La etiqueta del recuadro superior que califica al ámbito seleccionado (Empresa, formato, territorial, implant o distrito): <strong>En riesgo · Atención · Estable · Sólido · En crecimiento</strong> (o <em>Sin base comparable</em> si no hay año previo).</p>
+    <div class="card">
+      <p style="margin-top:0"><strong>Sobre qué mes se calcula:</strong> SIEMPRE el <strong>último mes cerrado</strong> (nunca el mes en curso / proyectado). &nbsp;·&nbsp; <strong>Qué NO usa:</strong> «Tiendas sin venta» no entra en la etiqueta; solo monto y conversión.</p>
+
+      <h4>Señal 1 — Monto GE acumulado del año (YTD) vs. mismo periodo del año pasado</h4>
+      <table><thead><tr><th>Cambio del monto acumulado</th><th class="p">Puntos</th></tr></thead><tbody>
+        <tr><td>Sube 5% o más</td><td class="p pos">+2</td></tr>
+        <tr><td>Sube de 0% a 5%</td><td class="p pos">+1</td></tr>
+        <tr><td>Baja de 0% a −5%</td><td class="p neg">−1</td></tr>
+        <tr><td>Baja más de 5%</td><td class="p neg">−2</td></tr>
+      </tbody></table>
+
+      <h4>Señal 2 — Conversión acumulada del año (YTD), diferencia en puntos porcentuales (pp)</h4>
+      <table><thead><tr><th>Cambio de la conversión</th><th class="p">Puntos</th></tr></thead><tbody>
+        <tr><td>Mejora 0.3 pp o más</td><td class="p pos">+1</td></tr>
+        <tr><td>Se mantiene (−0.3 a +0.3 pp)</td><td class="p">0</td></tr>
+        <tr><td>Baja entre 0.3 y 1.5 pp</td><td class="p neg">−1</td></tr>
+        <tr><td>Baja más de 1.5 pp</td><td class="p neg">−2</td></tr>
+      </tbody></table>
+
+      <h4>Señal 3 — Monto GE del mes cerrado vs. mismo mes del año pasado</h4>
+      <table><thead><tr><th>Cambio del monto del mes</th><th class="p">Puntos</th></tr></thead><tbody>
+        <tr><td>Sube más de 15%</td><td class="p pos">+1</td></tr>
+        <tr><td>Entre −5% y +15%</td><td class="p">0</td></tr>
+        <tr><td>Baja más de 5%</td><td class="p neg">−1</td></tr>
+      </tbody></table>
+
+      <h4>Del puntaje total a la etiqueta</h4>
+      <table><thead><tr><th class="p">Puntaje</th><th>Etiqueta</th></tr></thead><tbody>
+        <tr><td class="p">3 o más</td><td><strong>En crecimiento</strong></td></tr>
+        <tr><td class="p">2</td><td><strong>Sólido</strong></td></tr>
+        <tr><td class="p">0 a 1</td><td><strong>Estable</strong></td></tr>
+        <tr><td class="p">−1 a −3</td><td><strong>Atención</strong></td></tr>
+        <tr><td class="p">−4 o menos</td><td><strong>En riesgo</strong></td></tr>
+      </tbody></table>
+      <div class="note">La señal más fuerte es el <strong>acumulado del año</strong>. Por eso un ámbito con un <strong>mes flojo</strong> pero con el <strong>año en positivo</strong> y la <strong>conversión al alza</strong> puede salir «Sólido». Es intencional: premia la tendencia del año, no un solo mes.</div>
+
+      <h4>Ejemplo real — Distrito VDM10 (Bodega · Héctor Ortiz Arroyo), corte de julio 2026</h4>
+      <table><thead><tr><th>Señal</th><th>Valor</th><th class="p">Puntos</th></tr></thead><tbody>
+        <tr><td>Monto YTD</td><td>+12.8% (116,431 vs 103,222)</td><td class="p pos">+2</td></tr>
+        <tr><td>Conversión YTD</td><td>+0.54 pp (2.98% vs 2.45%)</td><td class="p pos">+1</td></tr>
+        <tr><td>Monto del mes</td><td>−18.9% (8,681 vs 10,708)</td><td class="p neg">−1</td></tr>
+        <tr><td><strong>Total</strong></td><td></td><td class="p"><strong>2 → «Sólido»</strong></td></tr>
+      </tbody></table>
+      <p class="tablecap">La conversión sube en parte porque los elegibles cayeron más (−30%) que las GE (−20%). Si se decide <strong>no premiar</strong> ese caso o dar <strong>más peso al mes</strong>, se ajustan los rangos de la Señal 2 y/o la 3.</p>
+    </div>
+    <div class="vinc">
+      <div class="vh">◎ Vínculos — qué tocar si cambias esto</div>
+      <ul>
+        <li><span class="badge b-manual">a mano</span> <span class="mono">engine/dashboard_template.html</span> → función <span class="mono">diagFor()</span> (rangos del puntaje) y <span class="mono">renderExec()</span> (mes = último cerrado).</li>
+        <li><span class="badge b-manual">a mano</span> <span class="mono">engine/dashboard_ejecutivo_template.html</span> → mismas funciones (plantilla gemela: cambiar una = cambiar la otra).</li>
+        <li>Matriz Maestra → tarjeta con clave <span class="mono">diagnostico</span>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 2. PADRÓN -->
+  <section class="sec" id="padron">
+    <div class="sec-h"><h3>2 · Padrón (total de tiendas)</h3><span class="k">clave: padron / tiendas_total</span></div>
+    <p>El <strong>denominador único</strong> de «total de tiendas» en TODO el visor.</p>
+    <div class="card">
+      <p style="margin-top:0"><strong>Definición:</strong> tiendas con <strong>datos (registro)</strong> en la ventana de <strong>3 meses del último mes cerrado</strong>. NO depende del nombre: una tienda con el nombre en blanco pero con datos <strong>sí cuenta</strong> y nunca es baja por falta de nombre.</p>
+      <p><strong>Regla de oro:</strong> ese mismo número se usa como total en <strong>todas</strong> las secciones (subtítulo, Con/Sin venta, Pareto, estrellas y comisión). <strong>Sin filtro los cinco deben coincidir</strong>; con filtro, los tres formatos deben sumar el total.</p>
+      <table><thead><tr><th>Ámbito</th><th class="p">Tiendas (hoy)</th></tr></thead><tbody>
+        <tr><td>Total (sin filtro)</td><td class="p">1,653</td></tr>
+        <tr><td>Walmart</td><td class="p">337</td></tr>
+        <tr><td>Bodega Aurrerá</td><td class="p">1,141</td></tr>
+        <tr><td>Sam's Club</td><td class="p">175</td></tr>
+      </tbody></table>
+    </div>
+    <div class="vinc">
+      <div class="vh">◎ Vínculos — qué tocar si cambias esto</div>
+      <ul>
+        <li><span class="badge b-auto">se calcula solo</span> función <span class="mono">padronSet()</span> + constante <span class="mono">LC_MI</span>, en ambas plantillas.</li>
+        <li>Al tocar la definición cambia a la vez: título, Con/Sin venta, Pareto, estrellas, comisión y movimiento de padrón.</li>
+        <li>Matriz Maestra → tarjeta con clave <span class="mono">tiendas_total</span>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 3. PRESUPUESTO -->
+  <section class="sec" id="presupuesto">
+    <div class="sec-h"><h3>3 · Presupuesto sugerido</h3><span class="k">clave: pres_metodo</span></div>
+    <div class="card">
+      <p style="margin-top:0">El método completo (venta previa + Brecha × %FB × factor estrella + piso, repartido por estacionalidad) está <strong>en el código</strong> y <strong>oculto al Cliente</strong>. Pendiente de traer aquí con sus fórmulas y parámetros cuando se requiera.</p>
+    </div>
+    <div class="vinc">
+      <div class="vh">◎ Vínculos</div>
+      <ul>
+        <li>Cálculo: <span class="mono">engine/recompute_all.py</span> · parámetros en <span class="mono">Parámetros Base.xlsx</span>.</li>
+        <li>Matriz Maestra → tarjetas <span class="mono">conv</span> (conversión objetivo) y <span class="mono">subtitulos_ui</span> / <span class="mono">descargas_cliente</span> (textos ocultos al Cliente).</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 4. ESTRELLAS -->
+  <section class="sec" id="estrellas">
+    <div class="sec-h"><h3>4 · Estrellas (madurez de tienda)</h3><span class="k">clave: criterios</span></div>
+    <div class="card">
+      <p style="margin-top:0">Los cinco criterios (Vende · Crece · Cumple · Constancia · Eficiencia) y sus umbrales viven en <span class="mono">engine/stars.py</span>. Es know-how: no se detalla al Cliente. Pendiente de documentar aquí con sus rangos exactos.</p>
+    </div>
+    <div class="vinc">
+      <div class="vh">◎ Vínculos</div>
+      <ul>
+        <li>Lógica real: <span class="mono">engine/stars.py</span> (funciones c1–c5).</li>
+        <li>Nombres cortos: 6 lugares (ver Matriz, clave <span class="mono">nombres</span>).</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="foot">Documento vivo · interno. Al cambiar cualquier base de cálculo o rango, actualízalo aquí, ajústalo en el código listado en «Vínculos» y revisa la Matriz Maestra.</div>
+</div>
+
+<script>
+(function(){
+  var b=document.getElementById('tgl');
+  function cur(){var t=document.documentElement.getAttribute('data-theme'); if(t) return t;
+    return (window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';}
+  b.onclick=function(){document.documentElement.setAttribute('data-theme', cur()==='dark'?'light':'dark');};
+})();
+</script>
+</body>
+</html>

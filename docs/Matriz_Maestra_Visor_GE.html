@@ -211,6 +211,10 @@ td.k{font-weight:600}
       </div>
     </div>
     <div class="spacer"></div>
+    <nav style="display:flex;gap:8px;flex-wrap:wrap;margin-right:6px">
+      <a href="Conocimiento_Base_Proyecto_Visor_GE.md" style="font-size:12.5px;text-decoration:none;color:var(--ink-soft);border:1px solid var(--border-strong);background:var(--surface);padding:7px 11px;border-radius:9px">Conocimiento Base</a>
+      <a href="Metodologia_Calculo_Visor_GE.html" style="font-size:12.5px;text-decoration:none;color:var(--ink-soft);border:1px solid var(--border-strong);background:var(--surface);padding:7px 11px;border-radius:9px">Metodología</a>
+    </nav>
     <button class="tgl" id="themeBtn" aria-label="Cambiar tema">◑</button>
   </div>
 </div>
@@ -220,7 +224,7 @@ td.k{font-weight:600}
     <div class="eyebrow">Centro de orientación del proyecto</div>
     <h2>Si cambias algo, aquí ves a qué le pega.</h2>
     <p>Este es el mapa único del Visor Ejecutivo de Garantías Extendidas (Grupo Walmart): cada dato, término, parámetro y enlace del proyecto, con <b>dónde vive</b> y su <b>radio de impacto</b>. La idea es simple: antes de tocar algo, míralo aquí y sabrás qué otros archivos o documentos hay que ajustar — para no volver a descubrir “a pedazos” que faltaba cambiarlo en otro lado.</p>
-    <div class="stamp">Auditoría al 27 de agosto de 2026 · reconstruida desde archivos, código, GitHub y notas</div>
+    <div class="stamp">Auditoría al 28 de agosto de 2026 · reconstruida desde archivos, código, GitHub y notas</div>
   </header>
 
   <div class="tiles" id="tiles"></div>
@@ -305,6 +309,54 @@ const CATS={
 // auto: true=se actualiza solo · false=a mano · "source"=fuente de verdad
 const A_AUTO=true, A_MAN=false, A_SRC="source";
 const DATA=[
+ {id:"tiendas_total", cat:"ui", crit:"alta", name:"Padrón ÚNICO — total de tiendas en todo el visor",
+  what:"HAY UN SOLO «total de tiendas» (el padrón) usado en TODAS las secciones: subtítulo del encabezado, tarjetas «Con/Sin venta», Concentración (Pareto), «Clasificación por estrellas» y «¿Cuántas tiendas pueden cobrar comisión?». Sin filtro, TODOS deben dar el mismo número (hoy 1,653). La única razón para que difieran es un filtro activo (formato/distrito/territorial), y entonces todos bajan igual. El padrón = tiendas con DATOS (registro) en la ventana de 3 meses del ÚLTIMO MES CERRADO; se topa al último cierre (NUNCA usa el mes proyectado, así que no existe «cierre» del mes en curso). Una tienda con NOMBRE EN BLANCO pero con datos SÍ cuenta y nunca es baja por falta de nombre.",
+  src:"Se calcula en el navegador desde data.json. Función única: padronSet(f) + constante LC_MI (índice del último mes cerrado). rosterActive y el título usan el mismo criterio por datos. No se escribe a mano.",
+  locs:[
+   {p:"engine/dashboard_template.html", n:"padronSet()/LC_MI (definición) · tagStores (título) · tiendasCounts (con/sin) · renderOpp (Pareto) · renderStars (estrellas) · renderPayability (comisión) · renderRoster (movimiento, topado a LC_MI)", a:A_AUTO},
+   {p:"engine/dashboard_ejecutivo_template.html", n:"Mismos cambios (plantilla gemela)", a:A_AUTO},
+  ],
+  impact:"Si tocas padronSet() o la ventana de 3 meses, cambia el número en TODO el visor a la vez (subtítulo, con/sin, Pareto, estrellas, comisión y movimiento de padrón). Regla de validación: sin filtro, esos cinco números deben ser idénticos; con filtro, los tres formatos deben sumar el total. «Con venta» + «Sin venta» = padrón; los % suman 100."},
+
+ {id:"subtitulos_ui", cat:"ui", crit:"baja", name:"Subtítulos del header y de Presupuesto sugerido",
+  what:"Textos de UI orientados a OCULTAR el know-how al usuario final. El header ya NO dice «Grupo Walmart» (redundante con los formatos). El subtítulo de Presupuesto (sugSubtitle) es redacción vendedora («nuevos algoritmos matemáticos», empuje «suavizado») sin método. En la ayuda (modal) se reescribió «Presupuesto sugerido» sin fórmula y se ELIMINÓ la ayuda «Mes en curso (datos proyectados)». La nota detallada «Cómo se arma el presupuesto» (sugMethod) ya estaba APAGADA (display:none + if(0)): no la ve el usuario.",
+  src:"Texto escrito a mano dentro de las plantillas.",
+  locs:[
+   {p:"engine/dashboard_template.html", n:"div.sub del header · sugSubtitle · ayuda h3 «Presupuesto sugerido» (se quitó la de datos proyectados)", a:A_MAN},
+   {p:"engine/dashboard_ejecutivo_template.html", n:"Mismos textos (plantilla gemela)", a:A_MAN},
+   {p:"PENDIENTE know-how aún visible", n:"Texto «Lectura» de cobrabilidad (dashboard_template.html ~L994 · ejecutivo ~L879): menciona conversión objetivo WM20/BA7/SC15 y «+X% por brecha». Y los EXCELES: hoja «Leyenda» de Evaluación (build_evaluacion.py) + Instructivo_Visor_GE.html mencionan el método.", a:A_MAN},
+  ],
+  impact:"Son textos gemelos en las dos plantillas: si cambias uno, cambia el otro para no desincronizar. Quedan focos de know-how por decidir: la «Lectura» de cobrabilidad y los Excels/Instructivo."},
+
+ {id:"descargas_cliente", cat:"pub", crit:"alta", name:"Descargas del Cliente — protección de know-how",
+  what:"Lo que el Cliente puede DESCARGAR desde el visor no debe exhibir el método. Descarga de Presupuesto (botones ⬇): ahora solo 2 hojas —«Resumen por tienda» (Tienda, Clave, Formato, Elegibles año previo, Venta año previo, Conversión año previo, Presupuesto, Crecimiento %) y «Meta mensual»—. Se ELIMINARON las hojas «Auditoría» y «Metodología» (exponían Potencial, Brecha, %FB, Factor estrella, Δ x Brecha/Piso y las fórmulas). El año de las columnas es dinámico (PREV = año del último cierre − 1), no fijo a 2025. La conversión objetivo se puede mostrar (viene del Cliente).",
+  src:"engine/dashboard_template.html y dashboard_ejecutivo_template.html — función buildExcel().",
+  locs:[
+   {p:"engine/dashboard_template.html · buildExcel()", n:"Hojas Resumen (con Elegibles+Conversión previa) y Meta mensual. Auditoría/Metodología eliminadas.", a:A_AUTO},
+   {p:"engine/dashboard_ejecutivo_template.html · buildExcel()", n:"Mismos cambios (gemela)", a:A_AUTO},
+   {p:"Estrellas — cálculo oculto", n:"El tooltip de estrellas ya NO muestra el umbral (CRIT); solo el nombre corto (PROXNAME). Se conserva ✓/✗ y la guía «cómo lograr la siguiente» (no revela suficiente). La Evaluación de Tiendas.xlsx (con Leyenda de criterios) va a Drive, NO se descarga del visor.", a:A_MAN},
+  ],
+  impact:"Regla: cualquier hoja o texto DESCARGABLE/visible por el Cliente no debe detallar cómo se calculan presupuesto ni estrellas. Nombres cortos y «cómo subir a la siguiente estrella» sí se permiten. Si agregas columnas o una hoja nueva a las descargas, revisa que no reintroduzca %FB, Brecha, Factor estrella ni los umbrales de estrellas."},
+
+ {id:"diagnostico", cat:"ui", crit:"media", name:"Diagnóstico ejecutivo (etiqueta En riesgo…En crecimiento)",
+  what:"La etiqueta del recuadro superior sale de un score en diagFor(): Monto YoY YTD (±2/±1/−1/−2) + Δ Conversión YTD (+1/0/−1/−2) + Monto YoY del mes (+1/0/−1). NO usa «Tiendas sin venta». Ahora SIEMPRE juzga sobre el ÚLTIMO MES CERRADO (no sobre el mes proyectado): renderExec topa el mes a LC_MI. Por eso un ámbito con el mes flojo pero acumulado del año positivo y conversión al alza puede salir «Sólido».",
+  src:"engine/dashboard_template.html y dashboard_ejecutivo_template.html — diagFor() (umbrales del score) y renderExec() (mes = Math.min(mes, LC_MI)).",
+  locs:[
+   {p:"engine/dashboard_template.html", n:"diagFor() umbrales del score · renderExec() tope a LC_MI", a:A_MAN},
+   {p:"engine/dashboard_ejecutivo_template.html", n:"Mismo (plantilla gemela)", a:A_MAN},
+  ],
+  impact:"Si el Cliente quiere que pese más la caída del mes, o no premiar la conversión cuando sube solo porque cayeron los elegibles, se ajustan los umbrales de diagFor(). Cambiar aquí NO afecta los números de las tarjetas, solo la etiqueta y su texto."},
+
+ {id:"filtros_seg", cat:"ui", crit:"media", name:"Filtros Distrito ↔ Territorial (comportamiento)",
+  what:"Distrito y Territorial son dos agrupaciones INDEPENDIENTES de tiendas (no jerárquicas). Bajo «Territoriales» hay dos roles: Territorial físico e Implant remota (Daniela Pérez, Luzmaría Ramírez, Clara Olivares — ven las tiendas de ciudades sin territorial físico). Por eso un distrito suele tener 2 responsables. Al elegir un DISTRITO: (1) se mueve el Formato al del distrito (ya existía); (2) el Territorial se pone por default en quien tenga MÁS tiendas en ese distrito; (3) quedan HABILITADOS «Todos» + los territoriales que también tienen tiendas en ese distrito, y DESHABILITADOS los demás. Al volver a «Todos» en distrito, se re-habilitan todos.",
+  src:"engine/dashboard_template.html y dashboard_ejecutivo_template.html — IIFE initSeg(): distTerrCnt, terrDominante(), terrsEnDist(), setTerrOptions() y los handlers sd.onchange/st.onchange.",
+  locs:[
+   {p:"engine/dashboard_template.html · initSeg()", n:"distTerrCnt (conteo distrito→territorial), dominante + habilitación de opciones", a:A_AUTO},
+   {p:"engine/dashboard_ejecutivo_template.html · initSeg()", n:"Mismo (plantilla gemela)", a:A_AUTO},
+   {p:"Segmentacion.xlsx (Drive «Avance Ventas Bot»)", n:"Fuente: hojas «Territoriales/Distritos» por formato. Los implants tienen clave que inicia con «i»; se reflejan en DB.implants.", a:A_SRC},
+  ],
+  impact:"El default sale del dato (quien tenga más tiendas en el distrito), así que cambia solo si cambia la Segmentación. No hay lista fija de distrito→territorial escrita a mano. Si un distrito tiene un único territorial, solo ese queda habilitado (además de «Todos»)."},
+
  {id:"nombres", cat:"estrella", crit:"alta", name:"Nombres cortos de las estrellas",
   what:"Las etiquetas Vende · Crece · Cumple · Constancia · Eficiencia. NO hay una sola fuente: están escritas a mano en varios archivos, por eso es el punto más delicado (es justo el que ya nos mordió).",
   src:"Escritas a mano en cada archivo (sin fuente única)",

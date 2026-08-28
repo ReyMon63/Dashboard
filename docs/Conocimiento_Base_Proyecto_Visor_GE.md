@@ -41,3 +41,5 @@ Reymon es el dueño del proyecto y **no es programador**: todas las explicacione
 - Para **publicar o tocar archivos**, usar un chat **"En tu computadora"**.
 - Para **planear o consultar**, cualquier chat sirve (incluido el iPhone).
 - **Referencias vivas:** la *Matriz Maestra del Visor GE* (página interactiva + Excel) es el mapa oficial de dependencias. Consultarla antes de cualquier cambio.
+- **Metodología (know-how):** `docs/Metodologia_Calculo_Visor_GE.html` guarda las **bases de cálculo y rangos** de lo que el visor decide solo (diagnóstico ejecutivo, padrón, etc.). Documento **interno**, no se comparte con el Cliente.
+- **Los tres registros maestros están vinculados:** *Conocimiento Base* (el qué) · *Matriz Maestra* (el dónde) · *Metodología* (el cómo). Cada concepto lleva una **clave** igual en la Matriz y en la Metodología; la Matriz es el centro que enumera TODOS los lugares a tocar. Antes de cambiar algo, se consulta esa clave para ajustar código y documentos vinculados.
